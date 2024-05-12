@@ -1,0 +1,83 @@
+WINDOWS,,
+,,
+Browser,Artifact,File Path (Windows)
+Google Chrome,Navigation History,%userprofile%\AppData\Local\Google\Chrome\User Data\Default\History
+,Autocomplete Data,%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Web Data
+,Bookmarks,%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Bookmarks
+,Extensions and Add-ons,%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Extensions
+,Cache,%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Cache
+,Logins,%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Login Data
+,Favicons,%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Favicons
+,Browser Sessions,%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Sessions
+,Downloads,%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Downloads
+,Form Data,%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Web Data (autofill data)
+,Thumbnails,%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Thumbnails
+,Custom Dictionary,%userprofile%\AppData\Local\Google\Chrome\User Data\Default\Custom Dictionary.txt
+Mozilla Firefox,Navigation History,%userprofile%\AppData\Roaming\Mozilla\Firefox\Profiles\&lt;profile_folder&gt;\places.sqlite
+,Autocomplete Data,%userprofile%\AppData\Roaming\Mozilla\Firefox\Profiles\&lt;profile_folder&gt;\formhistory.sqlite
+,Bookmarks,%userprofile%\AppData\Roaming\Mozilla\Firefox\Profiles\&lt;profile_folder&gt;\bookmarkbackups
+,Extensions and Add-ons,%userprofile%\AppData\Roaming\Mozilla\Firefox\Profiles\&lt;profile_folder&gt;\addons.json
+,Cache,%userprofile%\AppData\Roaming\Mozilla\Firefox\Profiles\&lt;profile_folder&gt;\cache2\entries
+,Logins,%userprofile%\AppData\Roaming\Mozilla\Firefox\Profiles\&lt;profile_folder&gt;\logins.json
+,Favicons,%userprofile%\AppData\Roaming\Mozilla\Firefox\Profiles\&lt;profile_folder&gt;\favicons.sqlite
+,Browser Sessions,%userprofile%\AppData\Roaming\Mozilla\Firefox\Profiles\&lt;profile_folder&gt;\recovery.jsonlz4
+,Downloads,%userprofile%\AppData\Roaming\Mozilla\Firefox\Profiles\&lt;profile_folder&gt;\downloads.sqlite
+,Form Data,%userprofile%\AppData\Roaming\Mozilla\Firefox\Profiles\&lt;profile_folder&gt;\formhistory.sqlite
+,Thumbnails,%userprofile%\AppData\Roaming\Mozilla\Firefox\Profiles\&lt;profile_folder&gt;\thumbnails
+,Custom Dictionary,%userprofile%\AppData\Roaming\Mozilla\Firefox\Profiles\&lt;profile_folder&gt;\persdict.dat
+Microsoft Edge,Navigation History,%userprofile%\AppData\Local\Microsoft\Edge\User Data\Default\History
+,Autocomplete Data,%userprofile%\AppData\Local\Microsoft\Edge\User Data\Default\Web Data
+,Bookmarks,%userprofile%\AppData\Local\Microsoft\Edge\User Data\Default\Bookmarks
+,Extensions and Add-ons,%userprofile%\AppData\Local\Microsoft\Edge\User Data\Default\Extensions
+,Cache,%userprofile%\AppData\Local\Microsoft\Edge\User Data\Default\Cache
+,Logins,%userprofile%\AppData\Local\Microsoft\Edge\User Data\Default\Login Data
+,Favicons,%userprofile%\AppData\Local\Microsoft\Edge\User Data\Default\Favicons
+,Browser Sessions,`%userprofile%\AppData\Local\Microsoft\Edge\User
+LINUX,,
+,,
+Browser,Artifact,File Path (Linux)
+Google Chrome/Chromium,Navigation History,~/.config/google-chrome/Default/History
+,Autocomplete Data,~/.config/google-chrome/Default/Web Data
+,Bookmarks,~/.config/google-chrome/Default/Bookmarks
+,Extensions and Add-ons,~/.config/google-chrome/Default/Extensions
+,Cache,~/.cache/google-chrome/Default/Cache
+,Logins,~/.config/google-chrome/Default/Login Data
+,Favicons,~/.config/google-chrome/Default/Favicons
+,Browser Sessions,~/.config/google-chrome/Default/Sessions
+,Downloads,~/.config/google-chrome/Default/Downloads
+,Form Data,~/.config/google-chrome/Default/Web Data (autofill data)
+,Thumbnails,~/.config/google-chrome/Default/Thumbnails
+,Custom Dictionary,~/.config/google-chrome/Default/Custom Dictionary.txt
+Mozilla Firefox,Navigation History,~/.mozilla/firefox/&lt;profile_folder&gt;/places.sqlite
+,Autocomplete Data,~/.mozilla/firefox/&lt;profile_folder&gt;/formhistory.sqlite
+,Bookmarks,~/.mozilla/firefox/&lt;profile_folder&gt;/bookmarkbackups
+,Extensions and Add-ons,~/.mozilla/firefox/&lt;profile_folder&gt;/extensions.json
+,Cache,~/.cache/mozilla/firefox/&lt;profile_folder&gt;/cache2/entries
+,Logins,~/.mozilla/firefox/&lt;profile_folder&gt;/logins.json
+,Favicons,~/.mozilla/firefox/&lt;profile_folder&gt;/favicons.sqlite
+,Browser Sessions,~/.mozilla/firefox/&lt;profile_folder&gt;/recovery.jsonlz4
+,Downloads,~/.mozilla/firefox/&lt;profile_folder&gt;/downloads.sqlite
+,Form Data,~/.mozilla/firefox/&lt;profile_folder&gt;/formhistory.sqlite
+,Thumbnails,~/.mozilla/firefox/&lt;profile_folder&gt;/thumbnails
+,Custom Dictionary,~/.mozilla/firefox/&lt;profile_folder&gt;/persdict.dat
+MAC,,
+,,
+Browser,Artifact,File Path (macOS)
+Safari,Navigation History,~/Library/Safari/History.db
+,Autocomplete Data,~/Library/Safari/AutoFill/AutoFill.plist
+,Bookmarks,~/Library/Safari/Bookmarks.plist
+,Extensions,Safari extensions are stored in various locations within ~/Library/Safari/Extensions/
+,Cache,~/Library/Caches/com.apple.Safari/
+,Downloads,~/Library/Safari/Downloads.plist
+,Cookies,~/Library/Cookies/Cookies.binarycookies
+Google Chrome (macOS),Navigation History,~/Library/Application Support/Google/Chrome/Default/History
+,Autocomplete Data,~/Library/Application Support/Google/Chrome/Default/Web Data
+,Bookmarks,~/Library/Application Support/Google/Chrome/Default/Bookmarks
+,Extensions and Add-ons,~/Library/Application Support/Google/Chrome/Default/Extensions
+,Cache,~/Library/Caches/Google/Chrome/Default/Cache
+,Logins,~/Library/Application Support/Google/Chrome/Default/Login Data
+,Favicons,~/Library/Application Support/Google/Chrome/Default/Favicons
+,Browser Sessions,~/Library/Application Support/Google/Chrome/Default/Sessions
+,Downloads,~/Library/Application Support/Google/Chrome/Default/Downloads
+,Form Data,~/Library/Application Support/Google/Chrome/Default/Web Data (autofill data)
+,Thumbnails,`~/Library
