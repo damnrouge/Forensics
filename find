@@ -1,0 +1,29 @@
+Linux commands : 
+FIND: 
++-------------------------------------------+-------------------------------------------------------------+----------------------------------------------------+
+| Syntax                                    | Description                                                 | Example                                            |
++-------------------------------------------+-------------------------------------------------------------+----------------------------------------------------+
+| find /path/to/directory                   | Finds all files and directories within the specified path.  | find /home/user                                    |
+| find /path/to/directory -name "pattern"   | Finds files by name matching the specified pattern.         | find /home/user -name "example.txt"                |
+| find /path/to/directory -type {f|d}       | Finds files (-type f) or directories (-type d).             | find /home/user -type f                            |
+| find /path/to/directory -size {+|-}size   | Finds files larger (+) or smaller (-) than the specified size. | find /home/user -size +100M                      |
+| find /path/to/directory -mtime {+|-}n     | Finds files modified more than (+) or less than (-) n days ago. | find /home/user -mtime -7                        |
+| find /path/to/directory -user username    | Finds files owned by a specific user.                       | find /home/user -user john                         |
+| find /path/to/directory -group groupname  | Finds files belonging to a specific group.                  | find /home/user -group developers                  |
+| find /path/to/directory -perm mode        | Finds files with specific permissions.                      | find /home/user -perm 755                          |
+| find /path/to/directory ! -perm /111      | Finds files that are not executable by anyone.              | find /home/user ! -perm /111                       |
+| find /path/to/directory -exec command {} \; | Executes a command on each found file.                      | find /home/user -name "*.log" -exec rm {} \;       |
+| find /path/to/directory -maxdepth n       | Limits search to n levels of directories below the starting point. | find /home/user -maxdepth 2 -name "*.txt"       |
+| find /path/to/directory -mindepth n       | Starts search at n levels of directories below the starting point. | find /home/user -mindepth 1 -name "*.txt"       |
+| find /path/to/directory -empty            | Finds all empty files and directories.                      | find /home/user -empty                             |
+| find /path/to/directory -newer file       | Finds files newer than the specified file.                  | find /home/user -newer /home/user/ref.txt          |
+| find /path/to/directory -regex "pattern"  | Finds files matching the specified regex pattern.           | find /home/user -regex ".*\.\(txt\|log\)$"         |
+| find / -type f -perm /4000                | Finds files with the SUID bit set.                          | find /usr -type f -perm /4000                      |
+| find / -type f -perm /2000                | Finds files with the SGID bit set.                          | find /var -type f -perm /2000                      |
+| find / -type f -size 100M                 | Finds files that are exactly 100MB in size.                 | find /home/user -type f -size 100M                 |
+| find / -type f -size +1M -size -10M       | Finds files within a size range (1MB to 10MB).              | find /var/log -type f -size +1M -size -10M         |
+| find / -type f -name "*.log" -size +100M  | Finds files by name and size (e.g., large log files).       | find /home/user -type f -name "*.log" -size +100M  |
+| find / -type f \( -perm /4000 -o -perm /2000 \) -mtime -n | Finds recently modified SUID/SGID files.            | find /usr -type f \( -perm /4000 -o -perm /2000 \) -mtime -7 |
+| find /path/to/directory -type f -exec grep -l "pattern" {} \; | Finds files containing a specific string pattern. | find /home/user -type f -exec grep -l "password" {} \; |
++-------------------------------------------+-------------------------------------------------------------+----------------------------------------------------+
+
