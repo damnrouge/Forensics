@@ -122,6 +122,49 @@ Jun 1 12:01:01 server01 CRON[12843]: pam_unix(cron
 - [Linux Security and Monitoring](https://www.tecmint.com/linux-server-security-tips/)
 
 
+## Filtering Specific Entries
+# Filter for failed login attempts
+grep "Failed password" /var/log/auth.log
+
+# Filter for successful login attempts
+grep "Accepted password" /var/log/auth.log
+
+# Filter for CRON job executions
+grep CRON /var/log/auth.log
+
+## Counting Specific Events
+
+# Count the number of failed login attempts
+grep -c "Failed password" /var/log/auth.log
+
+# Count the number of successful login attempts
+grep -c "Accepted password" /var/log/auth.log
+
+# Count the number of CRON job executions
+grep -c CRON /var/log/auth.log
+
+
+## Analyzing Failed Login Attempts
+
+# Extract and sort IP addresses of failed login attempts
+grep "Failed password" /var/log/auth.log | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr
+
+# Extract and sort usernames used in failed login attempts
+grep "Failed password" /var/log/auth.log | awk '{print $(NF-5)}' | sort | uniq -c | sort -nr
+
+## Example Commands and Their Outputs
+
+# Example: Viewing the last 20 lines of auth.log
+tail -n 20 /var/log/auth.log
+
+# Example: Filtering for failed login attempts and displaying the last 10
+grep "Failed password" /var/log/auth.log | tail -n 10
+
+# Example: Counting the number of successful login attempts
+grep -c "Accepted password" /var/log/auth.log
+
+# Example: Extracting and sorting IP addresses of failed login attempts
+grep "Failed password" /var/log/auth.log | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr
 
 
 
