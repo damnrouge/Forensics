@@ -1,0 +1,129 @@
++-----------------------------------+---------------------------------------------------------+
+| Task                              | Steps                                                   |
++-----------------------------------+---------------------------------------------------------+
+| Adding Double Quotes to the       | 1. Press Ctrl + H to open the Replace tab.              |
+| Beginning and End of Each Line    | 2. Find what: ^(.*)$                                    |
+|                                   | 3. Replace with: "\1"                                   |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Adding Double Quotes to Specific  | 1. Press Ctrl + H to open the Replace tab.              |
+| Text Matches                      | 2. Find what: your_text                                 |
+|                                   | 3. Replace with: "your_text"                            |
+|                                   | 4. Choose Normal mode.                                  |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Removing Leading and Trailing     | 1. Press Ctrl + H to open the Replace tab.              |
+| Spaces                            | 2. Find what: ^\s+|\s+$                                 |
+|                                   | 3. Replace with: (leave empty)                          |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Converting Tabs to Spaces         | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: \t                                        |
+|                                   | 3. Replace with: (desired spaces)                       |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Replacing IP Addresses (IPv4)     | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: (\d{1,3}\.){3}\d{1,3}                     |
+|                                   | 3. Replace with: XXX.XXX.XXX.XXX                        |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Replacing IP Addresses (IPv6)     | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: ([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}    |
+|                                   | 3. Replace with: [REDACTED_IPV6]                        |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Normalizing Date Formats          | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: (\d{2})/(\d{2})/(\d{4})                   |
+|                                   | 3. Replace with: $3-$1-$2                               |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Masking Email Addresses           | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: \b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b  |
+|                                   | 3. Replace with: [REDACTED_EMAIL]                       |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Masking Credit Card Numbers       | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: \b(?:\d[ -]*?){13,16}\b                   |
+|                                   | 3. Replace with: [REDACTED_CARD]                        |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Replacing Placeholder Text        | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: PLACEHOLDER                               |
+|                                   | 3. Replace with: actual_text                            |
+|                                   | 4. Choose Normal mode.                                  |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Standardizing Log File Entries    | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: (\w+):\s*(\d{2}):(\d{2}):(\d{2})          |
+|                                   | 3. Replace with: \1 [\2:\3:\4]                          |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Removing Blank Lines              | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: ^\s*$                                     |
+|                                   | 3. Replace with: (leave empty)                          |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Reformatting JSON to Single Line  | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: \r?\n\s*                                  |
+|                                   | 3. Replace with: (leave empty)                          |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Masking Hostnames                 | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: \b(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}\b     |
+|                                   | 3. Replace with: [REDACTED_HOST]                        |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Removing Comments from Code       | 1. Press Ctrl + H to open the Replace tab.              |
+| (Single-line comments)            | 2. Find what: //.*                                      |
+|                                   | 3. Replace with: (leave empty)                          |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Removing Comments from Code       | 1. Press Ctrl + H to open the Replace tab.              |
+| (Multi-line comments)             | 2. Find what: /\*[\s\S]*?\*/                            |
+|                                   | 3. Replace with: (leave empty)                          |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Extracting Usernames from Logs    | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: .*username: (\w+).*                       |
+|                                   | 3. Replace with: \1                                     |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Normalizing Time Formats          | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: (\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)       |
+|                                   | 3. Replace with: \1:\2:\3 \4                            |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Extracting Domains from URLs      | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: https?://([^/]+).*                        |
+|                                   | 3. Replace with: \1                                     |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Masking File Paths                | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: [A-Za-z]:\\[^\s]+                         |
+|                                   | 3. Replace with: [REDACTED_PATH]                        |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++-----------------------------------+---------------------------------------------------------+
+| Standardizing MAC Addresses       | 1. Press Ctrl + H to open the Replace tab.              |
+|                                   | 2. Find what: ([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})   |
+|                                   | 3. Replace with: \1-\2-\3-\4-\5-\6                      |
+|                                   | 4. Choose Regular Expression mode.                      |
+|                                   | 5. Click Replace All.                                   |
++
