@@ -1,7 +1,7 @@
 # Understanding `auth.log`
 
 ## Auth Log Format
-```plaintext
+
 <timestamp> <hostname> <service_name>[<process_id>]: <message>
 
 The `auth.log` file in Linux systems logs all authentication-related events, such as user logins, failed login attempts, and other relevant security events. Each entry in the `auth.log` file consists of several fields providing details about the event.
@@ -18,7 +18,6 @@ The `auth.log` file in Linux systems logs all authentication-related events, suc
 
 ### Failed Login Attempt
 Jun 1 12:05:01 server01 sshd[12850]: Failed password for invalid user test from 192.168.1.100 port 40022 ssh2
-
 
 - **Timestamp**: Jun  1 12:05:01
 - **Hostname**: server01
@@ -40,11 +39,8 @@ Jun 1 13:05:01 server01 sshd[13230]: Accepted password for user from 192.168.1.1
 This entry indicates a successful login for the user `user` from the IP address `192.168.1.100`.
 
 ### CRON Job Execution
-Jun 1 12:01:01 server01 CRON[12843]: pam_unix(cron
-): session opened for user root by (uid=0)
-Jun 1 12:01:01 server01 CRON[12843]: pam_unix(cron
-): session closed for user root
-
+Jun 1 12:01:01 server01 CRON[12843]: pam_unix(cron:session): session opened for user root by (uid=0)
+Jun 1 12:01:01 server01 CRON[12843]: pam_unix(cron:session): session closed for user root
 
 - **Timestamp**: Jun  1 12:01:01
 - **Hostname**: server01
@@ -67,7 +63,6 @@ Jun 1 12:01:01 server01 CRON[12843]: pam_unix(cron
 - [CRON Job Basics](https://www.geeksforgeeks.org/cron-command-in-linux-with-examples/)
 - [Linux Security and Monitoring](https://www.tecmint.com/linux-server-security-tips/)
 
-
 ## Filtering Specific Entries
 # Filter for failed login attempts
 grep "Failed password" /var/log/auth.log
@@ -88,7 +83,6 @@ grep -c "Accepted password" /var/log/auth.log
 
 # Count the number of CRON job executions
 grep -c CRON /var/log/auth.log
-
 
 ## Analyzing Failed Login Attempts
 
@@ -111,8 +105,3 @@ grep -c "Accepted password" /var/log/auth.log
 
 # Example: Extracting and sorting IP addresses of failed login attempts
 grep "Failed password" /var/log/auth.log | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr
-
-
-
-
-
