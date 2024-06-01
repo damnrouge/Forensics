@@ -2,7 +2,7 @@
 
 ## Auth Log Format
 
-<timestamp> <hostname> <service_name>[<process_id>]: <message>
+`<timestamp> <hostname> <service_name>[<process_id>]: <message>`
 
 The `auth.log` file in Linux systems logs all authentication-related events, such as user logins, failed login attempts, and other relevant security events. Each entry in the `auth.log` file consists of several fields providing details about the event.
 
