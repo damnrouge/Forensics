@@ -1,0 +1,27 @@
+
+Jan  1 00:00:01 server1 sshd[12345]: Accepted password for user1 from 192.168.1.100 port 22 ssh2
+Jan  1 00:05:23 server1 sshd[12345]: Failed password for user2 from 192.168.1.101 port 22 ssh2
+Jan  1 00:10:45 server1 sudo: user1 : TTY=pts/0 ; PWD=/home/user1 ; USER=root ; COMMAND=/bin/ls
+Jan  1 00:15:32 server1 kernel: [12345.123456] connection refused from 192.168.1.102
+Jan  1 00:20:11 server1 kernel: [12345.123456] segfault at 0 ip 00007f8d7b4e214e sp 00007ffd0015bf88 error 4 in libc-2.27.so[7f8d7b46a000+1e7000]
+Jan  1 00:25:56 server1 sshd[12345]: Failed password for root from 192.168.1.103 port 22 ssh2
+Jan  1 00:30:12 server1 CRON[12345]: (user1) CMD (/usr/bin/python3 /home/user1/script.py)
+Jan  1 00:35:47 server1 kernel: [12345.123456] firewall: DROP IN=eth0 OUT= MAC=ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff SRC=192.168.1.104 DST=192.168.1.105 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=12345 DF PROTO=TCP SPT=12345 DPT=80 WINDOW=0 RES=0x00 RST URGP=0
+Jan  1 00:40:33 server1 kernel: [12345.123456] disk-full event on /dev/sda1
+Jan  1 00:45:19 server1 systemd: Starting session c1 of user root.
+Jan  1 00:50:55 server1 systemd: Started session c1 of user root.
+Jan  1 00:55:01 server1 sshd[12345]: Accepted password for user2 from 192.168.1.106 port 22 ssh2
+Jan  1 01:00:37 server1 kernel: [12345.123456] suspicious activity detected
+Jan  1 01:05:42 server1 sshd[12345]: Failed password for user3 from 192.168.1.107 port 22 ssh2
+Jan  1 01:10:58 server1 kernel: [12345.123456] firewall: DROP IN=eth0 OUT= MAC=ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff SRC=192.168.1.108 DST=192.168.1.109 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=12345 DF PROTO=TCP SPT=12345 DPT=80 WINDOW=0 RES=0x00 RST URGP=0
+Jan  1 01:15:23 server1 sudo: user2 : TTY=pts/1 ; PWD=/home/user2 ; USER=root ; COMMAND=/bin/cat /etc/shadow
+Jan  1 01:20:39 server1 sshd[12345]: Failed password for root from 192.168.1.110 port 22 ssh2
+Jan  1 01:25:44 server1 kernel: [12345.123456] connection refused from 192.168.1.111
+Jan  1 01:30:20 server1 kernel: [12345.123456] segfault at 0 ip 00007f8d7b4e214e sp 00007ffd0015bf88 error 4 in libc-2.27.so[7f8d7b46a000+1e7000]
+Jan  1 01:35:36 server1 kernel: [12345.123456] disk-full event on /dev/sda2
+Jan  1 01:40:52 server1 systemd: Starting session c2 of user admin.
+Jan  1 01:45:28 server1 systemd: Started session c2 of user admin.
+Jan  1 01:50:13 server1 sshd[12345]: Accepted password for user3 from 192.168.1.112 port 22 ssh2
+Jan  1 01:55:49 server1 kernel: [12345.123456] suspicious activity detected
+Jan  1 02:00:25 server1 sshd[12345]: Failed password for user4 from 192.168.1.113 port 22 ssh2
+Jan  1 02:05:01 server1 kernel: [12345.123456] firewall: DROP IN=eth0 OUT= MAC=ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff:ff SRC=192.168.1.114 DST=192.168.1.115 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=12345 DF PROTO=TCP SPT=12345 DPT=80 WINDOW=0 RES=0x00 RST URGP=0
