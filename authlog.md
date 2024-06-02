@@ -2,7 +2,7 @@
 
 ## Auth Log Format
 
-<timestamp> <hostname> <service_name>[<process_id>]: <message>
+`<timestamp> <hostname> <service_name>[<process_id>]: <message>`
 
 The `auth.log` file in Linux systems logs all authentication-related events, such as user logins, failed login attempts, and other relevant security events. Each entry in the `auth.log` file consists of several fields providing details about the event.
 
@@ -63,45 +63,45 @@ Jun 1 12:01:01 server01 CRON[12843]: pam_unix(cron:session): session closed for 
 - [CRON Job Basics](https://www.geeksforgeeks.org/cron-command-in-linux-with-examples/)
 - [Linux Security and Monitoring](https://www.tecmint.com/linux-server-security-tips/)
 
-## Filtering Specific Entries
-# Filter for failed login attempts
+# Filtering Specific Entries
+## Filter for failed login attempts
 grep "Failed password" /var/log/auth.log
 
-# Filter for successful login attempts
+## Filter for successful login attempts
 grep "Accepted password" /var/log/auth.log
 
-# Filter for CRON job executions
+## Filter for CRON job executions
 grep CRON /var/log/auth.log
 
-## Counting Specific Events
+# Counting Specific Events
 
-# Count the number of failed login attempts
+## Count the number of failed login attempts
 grep -c "Failed password" /var/log/auth.log
 
-# Count the number of successful login attempts
+## Count the number of successful login attempts
 grep -c "Accepted password" /var/log/auth.log
 
-# Count the number of CRON job executions
+## Count the number of CRON job executions
 grep -c CRON /var/log/auth.log
 
-## Analyzing Failed Login Attempts
+# Analyzing Failed Login Attempts
 
-# Extract and sort IP addresses of failed login attempts
+## Extract and sort IP addresses of failed login attempts
 grep "Failed password" /var/log/auth.log | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr
 
-# Extract and sort usernames used in failed login attempts
+## Extract and sort usernames used in failed login attempts
 grep "Failed password" /var/log/auth.log | awk '{print $(NF-5)}' | sort | uniq -c | sort -nr
 
-## Example Commands and Their Outputs
+# Example Commands and Their Outputs
 
-# Example: Viewing the last 20 lines of auth.log
+## Example: Viewing the last 20 lines of auth.log
 tail -n 20 /var/log/auth.log
 
-# Example: Filtering for failed login attempts and displaying the last 10
+## Example: Filtering for failed login attempts and displaying the last 10
 grep "Failed password" /var/log/auth.log | tail -n 10
 
-# Example: Counting the number of successful login attempts
+## Example: Counting the number of successful login attempts
 grep -c "Accepted password" /var/log/auth.log
 
-# Example: Extracting and sorting IP addresses of failed login attempts
+## Example: Extracting and sorting IP addresses of failed login attempts
 grep "Failed password" /var/log/auth.log | awk '{print $(NF-3)}' | sort | uniq -c | sort -nr
