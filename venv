@@ -1,0 +1,11 @@
+python -m venv labenv
+labenv\Scripts\activate
+pip install package_name
+deactivate
+
+pip freeze > requirements.txt
+
+python -m venv myenv
+source myenv/bin/activate     # or myenv\Scripts\activate on Windows
+
+pip install -r requirements.txt
