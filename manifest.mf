@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Main-Class: 
+Created-By: Grok AI
+Description: Digital Forensics Manifest File
