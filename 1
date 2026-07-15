@@ -1,1 +1,7 @@
-qqq
+Below are some ways attackers misuse how SVG files are displayed, each one getting past detection in a different way.
+
+Inline <script> execution — JS in a <script> tag, runs via onload. Easily caught: <script is a trivial signature match.
+Event-handler execution (no <script> tag) — Code lives in onload=/onclick= instead. Evasive: rules that only grep for <script miss it entirely.
+External script loading — SVG just loads a second-stage .js at render time. Evasive: the file at rest is small and clean — nothing malicious to scan.
+SVG smuggling (base64) — Payload decoded via atob() at runtime. Evasive: no readable keywords, just an opaque data blob.
+<foreignObject> HTML embedding — Real <input>/<form> embedded, no JS at all. Evasive: trips no script/entropy rule since it's not script-based.
