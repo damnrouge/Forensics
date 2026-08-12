@@ -1,3 +1,5 @@
+With administrative privileges, an attacker can request activation of a COM class configured to run as the interactive user and specify a target user’s session ID, forcing the COM object to be created and executed inside that user’s interactive session.
+
 # Cross-Session Activation (CSA)
 
 **Research topic:** Windows Cross-Session Activation  
