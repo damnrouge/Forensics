@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LSASS Dump via Windows Error Reporting – Purple Team Mastery</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        slate: { 850: '#1a2332', 950: '#0b1120' }
+      }
+    }
+  }
+}
+</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  code, .font-mono { font-family: 'JetBrains Mono', monospace; }
+  .tooltip {
+    position: absolute; z-index: 50; max-width: 320px; padding: 12px 14px;
+    background: #0f172a; border: 1px solid #334155; border-radius: 10px;
+    font-size: 13px; line-height: 1.45; color: #e2e8f0; box-shadow: 0 20px 40px rgba(0,0,0,.45);
+    pointer-events: none; opacity: 0; transform: translateY(6px); transition: all .18s ease;
+  }
+  .tooltip.visible { opacity: 1; transform: translateY(0); }
+  .tooltip strong { color: #38bdf8; }
+  .tooltip .miscon { color: #fbbf24; font-size: 12px; margin-top: 6px; display: block; }
+  .diagram-node { cursor: help; transition: all .15s; }
+  .diagram-node:hover { filter: brightness(1.15); }
+  .quiz-card { display: none; }
+  .quiz-card.active { display: block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .progress-bar { transition: width .4s cubic-bezier(.4,0,.2,1); }
+  details summary { list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  .sticky-toc { scrollbar-width: thin; }
+  .mermaid { background: transparent !important; }
+  .section-card { scroll-margin-top: 5.5rem; }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen">
+
+<!-- Theme Toggle + Progress -->
+<header class="fixed top-0 inset-x-0 z-40 bg-slate-950/90 backdrop-blur-md border-b border-slate-800">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm">PT</div>
+      <div>
+        <div class="font-semibold text-sm tracking-tight">LSASS ↔ WER Dump</div>
+        <div class="text-xs text-slate-400">Purple Team Deep Dive</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="hidden sm:flex items-center gap-2 text-xs text-slate-400">
+        <span id="progress-label">0%</span>
+        <div class="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div id="progress-bar" class="progress-bar h-full bg-cyan-500 rounded-full" style="width:0%"></div>
+        </div>
+      </div>
+      <button id="theme-btn" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 transition text-slate-300" title="Toggle theme">
+        <svg class="w-4 h-4 dark:hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+        <svg class="w-4 h-4 hidden dark:block" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="max-w-6xl mx-auto px-4 pt-20 pb-24 flex gap-8">
+  <!-- Sticky TOC -->
+  <nav class="hidden lg:block w-56 shrink-0 sticky top-24 self-start sticky-toc max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 text-sm">
+    <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Contents</div>
+    <ul class="space-y-1.5 text-slate-400">
+      <li><a href="#prereqs" class="hover:text-cyan-400 transition block py-0.5">Prerequisites</a></li>
+      <li><a href="#hero" class="hover:text-cyan-400 transition block py-0.5">Big Picture</a></li>
+      <li><a href="#mental-model" class="hover:text-cyan-400 transition block py-0.5">Mental Model</a></li>
+      <li><a href="#why-lsass" class="hover:text-cyan-400 transition block py-0.5">Why LSASS Matters</a></li>
+      <li><a href="#wer-basics" class="hover:text-cyan-400 transition block py-0.5">WER Fundamentals</a></li>
+      <li><a href="#silent-exit" class="hover:text-cyan-400 transition block py-0.5">Silent Process Exit</a></li>
+      <li><a href="#shtinkering" class="hover:text-cyan-400 transition block py-0.5">LSASS Shtinkering</a></li>
+      <li><a href="#werfaultsecure" class="hover:text-cyan-400 transition block py-0.5">WerFaultSecure + PPL</a></li>
+      <li><a href="#detection" class="hover:text-cyan-400 transition block py-0.5">Detection Engineering</a></li>
+      <li><a href="#synthesis" class="hover:text-cyan-400 transition block py-0.5">Connections</a></li>
+      <li><a href="#mastery" class="hover:text-cyan-400 transition block py-0.5">Mastery Quiz</a></li>
+      <li><a href="#retention" class="hover:text-cyan-400 transition block py-0.5">Retention Tools</a></li>
+    </ul>
+  </nav>
+
+  <main class="flex-1 min-w-0 space-y-16">
+
+    <!-- ========== PREREQUISITES ========== -->
+    <section id="prereqs" class="section-card">
+      <div class="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-6">
+        <h2 class="text-xl font-bold text-amber-400 mb-3 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Prerequisites – What You Need to Know First
+        </h2>
+        <p class="text-slate-300 mb-4">To fully understand this topic, you should already know:</p>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <details class="group bg-slate-900/60 rounded-xl border border-slate-700 overflow-hidden">
+            <summary class="px-4 py-3 cursor-pointer font-medium flex justify-between items-center hover:bg-slate-800/50">
+              LSASS & Credential Storage
+              <span class="text-slate-500 group-open:rotate-180 transition">▼</span>
+            </summary>
+            <div class="px-4 pb-4 text-sm text-slate-400 border-t border-slate-800 pt-3">
+              Local Security Authority Subsystem Service holds authentication data for active logon sessions (NTLM hashes, Kerberos tickets, sometimes plaintext). It is the primary target of MITRE T1003.001.
+            </div>
+          </details>
+          <details class="group bg-slate-900/60 rounded-xl border border-slate-700 overflow-hidden">
+            <summary class="px-4 py-3 cursor-pointer font-medium flex justify-between items-center hover:bg-slate-800/50">
+              Protected Process Light (PPL)
+              <span class="text-slate-500 group-open:rotate-180 transition">▼</span>
+            </summary>
+            <div class="px-4 pb-4 text-sm text-slate-400 border-t border-slate-800 pt-3">
+              PPL is a Windows protection that prevents lower-privilege processes from opening handles with dangerous rights (VM_READ, etc.) to higher-protected processes. LSASS often runs as PPL (especially with RunAsPPL enabled). Only equal or higher PPL levels (e.g. WinTCB) can interact freely.
+            </div>
+          </details>
+          <details class="group bg-slate-900/60 rounded-xl border border-slate-700 overflow-hidden">
+            <summary class="px-4 py-3 cursor-pointer font-medium flex justify-between items-center hover:bg-slate-800/50">
+              MiniDump & MiniDumpWriteDump
+              <span class="text-slate-500 group-open:rotate-180 transition">▼</span>
+            </summary>
+            <div class="px-4 pb-4 text-sm text-slate-400 border-t border-slate-800 pt-3">
+              A MiniDump is a structured snapshot of a process’s memory. The Windows API <code class="text-cyan-400">MiniDumpWriteDump</code> (from dbghelp/dbgcore) is the standard way tools create these dumps. Almost every LSASS dump technique eventually calls it or an equivalent.
+            </div>
+          </details>
+          <details class="group bg-slate-900/60 rounded-xl border border-slate-700 overflow-hidden">
+            <summary class="px-4 py-3 cursor-pointer font-medium flex justify-between items-center hover:bg-slate-800/50">
+              Basic EDR Telemetry
+              <span class="text-slate-500 group-open:rotate-180 transition">▼</span>
+            </summary>
+            <div class="px-4 pb-4 text-sm text-slate-400 border-t border-slate-800 pt-3">
+              You should be comfortable with Sysmon Event ID 1 (process create), 10 (process access), 11 (file create), Windows Security 4688, and the idea that “WerFault touching LSASS” is often treated as benign by default.
+            </div>
+          </details>
+        </div>
+        <p class="mt-4 text-sm text-slate-400">If any of these feel fuzzy, expand the cards above and make sure the mental model is solid before continuing. Everything else builds on them.</p>
+      </div>
+    </section>
+
+    <!-- ========== HERO ========== -->
+    <section id="hero" class="section-card">
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-xs font-medium mb-4 border border-cyan-500/20">
+          MITRE T1003.001 · Credential Access
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-3">
+          LSASS Dump via Windows Error Reporting
+        </h1>
+        <p class="text-lg text-slate-400 max-w-2xl mx-auto">
+          Force the legitimate crash-reporting machinery of Windows to hand you a full memory dump of LSASS — without crashing the process and while looking like normal system behaviour.
+        </p>
+      </div>
+
+      <!-- High-level visual -->
+      <div class="rounded-2xl border border-slate-700 bg-slate-900/50 p-6 mb-6 relative" id="hero-diagram">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">High-Level Flow (hover nodes)</div>
+        <div class="flex flex-col sm:flex-row items-stretch gap-3 text-sm">
+          <div class="diagram-node flex-1 rounded-xl bg-slate-800 border border-slate-600 p-4 text-center" data-tip="attacker" data-title="Attacker / Tool" data-body="Purple-team emulation tool or adversary code that either configures registry + calls RtlReportSilentProcessExit, sends a crafted ALPC message, or launches an old WerFaultSecure under PPL." data-miscon="People think you must crash LSASS. You don’t — the whole point is to avoid a crash.">
+            <div class="text-2xl mb-1">🎯</div>
+            <div class="font-semibold text-white">Attacker Intent</div>
+            <div class="text-xs text-slate-400 mt-1">Credential Access</div>
+          </div>
+          <div class="flex items-center justify-center text-slate-600 text-xl">→</div>
+          <div class="diagram-node flex-1 rounded-xl bg-slate-800 border border-slate-600 p-4 text-center" data-tip="wer" data-title="Windows Error Reporting" data-body="The built-in Windows service (WerSvc) and binaries (WerFault.exe / WerFaultSecure.exe) whose job is to collect crash dumps. Attackers abuse the dump-creation path without a real crash." data-miscon="Defenders often whitelist WerFault activity because it is common and Microsoft-signed.">
+            <div class="text-2xl mb-1">🛠️</div>
+            <div class="font-semibold text-white">WER Machinery</div>
+            <div class="text-xs text-slate-400 mt-1">WerFault / WerFaultSecure</div>
+          </div>
+          <div class="flex items-center justify-center text-slate-600 text-xl">→</div>
+          <div class="diagram-node flex-1 rounded-xl bg-slate-800 border border-slate-600 p-4 text-center" data-tip="lsass" data-title="LSASS Process" data-body="The target. Holds credential material. On modern systems it may be PPL-protected. The dump is produced by a process that has sufficient rights (or is itself PPL at the right level)." data-miscon="PPL does not make dumping impossible — it just changes which tools can do it.">
+            <div class="text-2xl mb-1">🔐</div>
+            <div class="font-semibold text-white">LSASS Memory</div>
+            <div class="text-xs text-slate-400 mt-1">Credentials in RAM</div>
+          </div>
+          <div class="flex items-center justify-center text-slate-600 text-xl">→</div>
+          <div class="diagram-node flex-1 rounded-xl bg-slate-800 border border-cyan-600/50 p-4 text-center" data-tip="dump" data-title="Dump File" data-body="Usually a MiniDump (.dmp). In the WerFaultSecure technique the file is deliberately given a PNG header so AV/EDR that scan for MDMP magic may ignore it until the header is restored offline." data-miscon="Seeing a large .png next to an unusual process is a strong hunting signal.">
+            <div class="text-2xl mb-1">📦</div>
+            <div class="font-semibold text-white">Memory Dump</div>
+            <div class="text-xs text-slate-400 mt-1">.dmp or disguised .png</div>
+          </div>
+        </div>
+        <div id="hero-tooltip" class="tooltip"></div>
+      </div>
+
+      <div class="rounded-xl bg-slate-900 border border-slate-700 p-5">
+        <h3 class="font-semibold text-white mb-2">What you will be able to do after this</h3>
+        <ul class="space-y-1.5 text-sm text-slate-300">
+          <li class="flex gap-2"><span class="text-cyan-400">✓</span> Explain three distinct WER-based LSASS dump techniques in plain language</li>
+          <li class="flex gap-2"><span class="text-cyan-400">✓</span> Draw the process flow and identify the chokepoints defenders can monitor</li>
+          <li class="flex gap-2"><span class="text-cyan-400">✓</span> Write or review detection logic that catches both classic and modern variants</li>
+          <li class="flex gap-2"><span class="text-cyan-400">✓</span> Emulate the techniques safely in a lab and measure your organisation’s coverage</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ========== MENTAL MODEL ========== -->
+    <section id="mental-model" class="section-card">
+      <h2 class="text-2xl font-bold text-white mb-2">Mental Model – The Core Framework</h2>
+      <p class="text-slate-400 mb-6">Everything in this page is a variation of one idea: <strong class="text-slate-200">turn the crash-dump pipeline into a silent credential extraction pipeline</strong>.</p>
+
+      <div class="rounded-2xl border border-slate-700 bg-slate-900/60 p-5 mb-6">
+        <div class="mermaid">
+flowchart LR
+    A[Trigger<br/>Silent Exit / LPC / Old Binary] --> B[WER Service<br/>or WerFaultSecure]
+    B --> C[MiniDumpWriteDump<br/>or equivalent]
+    C --> D[Dump File<br/>on disk]
+    D --> E[Offline Parsing<br/>Mimikatz / pypykatz]
+    style A fill:#0e7490,stroke:#22d3ee,color:#fff
+    style B fill:#1e3a5f,stroke:#38bdf8,color:#fff
+    style C fill:#1e3a5f,stroke:#38bdf8,color:#fff
+    style D fill:#713f12,stroke:#fbbf24,color:#fff
+    style E fill:#4c1d95,stroke:#a78bfa,color:#fff
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-6">
+        <div class="rounded-xl bg-slate-900 border border-slate-700 p-5">
+          <h3 class="font-semibold text-cyan-400 mb-2">Simple Explanation (Feynman)</h3>
+          <p class="text-sm text-slate-300 leading-relaxed">
+            Imagine Windows has a “crash photographer.” When a program crashes, this photographer (WerFault) takes a detailed photo of the program’s memory so Microsoft can later figure out what went wrong. Attackers discovered they can whisper to the photographer “Hey, LSASS just had a problem” even when LSASS is perfectly healthy. The photographer then takes a full photo of LSASS’s memory and saves it to disk — exactly the photo an attacker needs to steal passwords.
+          </p>
+        </div>
+        <div class="rounded-xl bg-slate-900 border border-slate-700 p-5">
+          <h3 class="font-semibold text-amber-400 mb-2">Where people usually get confused</h3>
+          <ul class="text-sm text-slate-300 space-y-2">
+            <li>• Thinking the technique requires actually crashing LSASS (it doesn’t).</li>
+            <li>• Believing PPL makes dumping impossible (it only raises the bar on who can dump).</li>
+            <li>• Assuming every WerFault access to LSASS is malicious (most are not — context is everything).</li>
+            <li>• Forgetting that the final dump file is the real prize; process events are just the trail.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== WHY LSASS ========== -->
+    <section id="why-lsass" class="section-card">
+      <h2 class="text-2xl font-bold text-white mb-4">1. Why LSASS Is the Prize</h2>
+      
+      <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-5 mb-5">
+        <h3 class="font-semibold text-white mb-3">Simple Explanation</h3>
+        <p class="text-slate-300 text-sm leading-relaxed">
+          When you log on to Windows, the system needs to remember “who you are” so it can keep granting you access to files, network shares, and other machines. That memory lives inside the LSASS process. If an attacker can take a complete snapshot of that process’s memory, they can later extract the password hashes (and sometimes clear-text passwords) offline and use them for lateral movement — exactly like stealing the master keyring of a building.
+        </p>
+      </div>
+
+      <div class="grid sm:grid-cols-3 gap-3 mb-5">
+        <div class="rounded-xl bg-slate-900 border border-slate-700 p-4">
+          <div class="text-xs text-slate-500 mb-1">Analogy</div>
+          <p class="text-sm text-slate-300">LSASS is the hotel’s front-desk computer that keeps every guest’s keycard data in RAM. Dumping it is photocopying the entire keycard database while the clerk is looking the other way.</p>
+        </div>
+        <div class="rounded-xl bg-slate-900 border border-slate-700 p-4">
+          <div class="text-xs text-slate-500 mb-1">Why it works this way</div>
+          <p class="text-sm text-slate-300">Windows needs the data in memory for performance and to support single-sign-on. Moving everything to an isolated enclave (Credential Guard) is the modern countermeasure, but many environments still lack it.</p>
+        </div>
+        <div class="rounded-xl bg-slate-900 border border-slate-700 p-4">
+          <div class="text-xs text-slate-500 mb-1">Connection</div>
+          <p class="text-sm text-slate-300">Every later technique is just a different way to get a privileged process (or a PPL process) to call the dump function on this particular target.</p>
+        </div>
+      </div>
+
+      <!-- Active Recall -->
+      <div class="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-5">
+        <h4 class="font-semibold text-cyan-400 mb-3">Active Recall – Explain it yourself</h4>
+        <details class="group">
+          <summary class="cursor-pointer text-sm text-slate-300 hover:text-white">Click to reveal a good answer</summary>
+          <p class="mt-3 text-sm text-slate-400 border-t border-slate-700 pt-3">
+            LSASS holds the credential material of every interactive and network logon session that is still alive. Because the data must be available for authentication decisions, it sits in process memory in a form that can be parsed by tools such as Mimikatz once a dump is obtained. Therefore any technique that can force a MiniDump of LSASS (without necessarily crashing it) is high-value for credential access.
+          </p>
+        </details>
+      </div>
+    </section>
+
+    <!-- ========== WER BASICS ========== -->
+    <section id="wer-basics" class="section-card">
+      <h2 class="text-2xl font-bold text-white mb-4">2. Windows Error Reporting – The Legitimate Photographer</h2>
+
+      <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-5 mb-5">
+        <h3 class="font-semibold text-white mb-3">Simple Explanation</h3>
+        <p class="text-slate-300 text-sm leading-relaxed">
+          Windows Error Reporting (WER) is the built-in system that notices when a program crashes, gathers diagnostic data (including a memory dump), and optionally sends a report to Microsoft. The main actors are the WER service (WerSvc) and two helper binaries: <code class="text-cyan-400">WerFault.exe</code> (normal processes) and <code class="text-cyan-400">WerFaultSecure.exe</code> (protected processes). Because these binaries are Microsoft-signed and run frequently, many security products treat their activity as low-risk.
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-slate-700 bg-slate-900/60 p-5 mb-5 relative" id="wer-flow">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Normal WER Crash Flow (hover)</div>
+        <div class="flex flex-wrap gap-2 justify-center text-sm">
+          <div class="diagram-node px-4 py-2 rounded-lg bg-slate-800 border border-slate-600" data-tip="crash" data-title="Process Crashes" data-body="An exception occurs. The process (or the kernel) notifies WER that something went wrong." data-miscon="In the attack techniques we never actually need a real crash of LSASS.">1. Crash / Exception</div>
+          <div class="text-slate-600 self-center">→</div>
+          <div class="diagram-node px-4 py-2 rounded-lg bg-slate-800 border border-slate-600" data-tip="service" data-title="WER Service" data-body="WerSvc receives the report (via LPC/ALPC or other internal channels) and decides how to handle it." data-miscon="The service can be forced to act even when the target process is healthy.">2. WerSvc</div>
+          <div class="text-slate-600 self-center">→</div>
+          <div class="diagram-node px-4 py-2 rounded-lg bg-slate-800 border border-slate-600" data-tip="fault" data-title="WerFault.exe" data-body="WerFault is spawned, often with arguments such as -u -p <pid>. It performs the actual MiniDumpWriteDump." data-miscon="Seeing WerFault with a -p pointing to LSASS is interesting only when correlated with other signals.">3. WerFault</div>
+          <div class="text-slate-600 self-center">→</div>
+          <div class="diagram-node px-4 py-2 rounded-lg bg-slate-800 border border-slate-600" data-tip="file" data-title="Dump File Written" data-body="A .dmp file appears (often under CrashDumps or a configured LocalDumps folder)." data-miscon="The folder location and file size are excellent hunting pivots.">4. Dump on Disk</div>
+        </div>
+        <div id="wer-tooltip" class="tooltip"></div>
+      </div>
+
+      <div class="rounded-xl bg-slate-900 border border-slate-700 p-5 mb-5">
+        <h3 class="font-semibold text-amber-400 mb-2">Common Pitfall</h3>
+        <p class="text-sm text-slate-300">Many detection rules simply exclude any process named WerFault.exe from LSASS-access alerts. That exclusion is exactly what the attacker is counting on. The correct approach is to allow-list <em>expected</em> WerFault behaviour (parent, command line, dump location) rather than the binary name alone.</p>
+      </div>
+    </section>
+
+    <!-- ========== SILENT PROCESS EXIT ========== -->
+    <section id="silent-exit" class="section-card">
+      <h2 class="text-2xl font-bold text-white mb-4">3. Technique A – Silent Process Exit Abuse</h2>
+
+      <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-5 mb-5">
+        <h3 class="font-semibold text-white mb-3">Simple Explanation</h3>
+        <p class="text-slate-300 text-sm leading-relaxed">
+          Windows has a feature called Silent Process Exit. It lets an administrator say “when this process exits (even quietly), automatically create a dump.” Attackers configure that feature for LSASS and then call the undocumented API <code class="text-cyan-400">RtlReportSilentProcessExit</code> on the LSASS process. The API tells WER “this process is exiting silently” without actually terminating LSASS. WerFault then creates the dump and the process continues running.
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-slate-700 bg-slate-900/60 p-5 mb-5">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Key Steps</div>
+        <ol class="space-y-3 text-sm">
+          <li class="flex gap-3">
+            <span class="shrink-0 w-6 h-6 rounded-full bg-cyan-600 text-white flex items-center justify-center text-xs font-bold">1</span>
+            <div>
+              <strong class="text-white">Registry preparation</strong><br>
+              <span class="text-slate-400">Set IFEO GlobalFlag for lsass.exe to include the silent-exit monitor flag, and configure SilentProcessExit\lsass.exe with ReportingMode that includes LOCAL_DUMP and a DumpType of full memory.</span>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <span class="shrink-0 w-6 h-6 rounded-full bg-cyan-600 text-white flex items-center justify-center text-xs font-bold">2</span>
+            <div>
+              <strong class="text-white">Obtain a suitable handle</strong><br>
+              <span class="text-slate-400">Open LSASS with rights that allow the silent-exit report (typically needs SeDebugPrivilege or equivalent).</span>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <span class="shrink-0 w-6 h-6 rounded-full bg-cyan-600 text-white flex items-center justify-center text-xs font-bold">3</span>
+            <div>
+              <strong class="text-white">Call RtlReportSilentProcessExit</strong><br>
+              <span class="text-slate-400">This can be done from an external process or even injected into LSASS itself. The call does <em>not</em> kill the process.</span>
+            </div>
+          </li>
+          <li class="flex gap-3">
+            <span class="shrink-0 w-6 h-6 rounded-full bg-cyan-600 text-white flex items-center justify-center text-xs font-bold">4</span>
+            <div>
+              <strong class="text-white">WerFault produces the dump</strong><br>
+              <span class="text-slate-400">A dump appears in the configured folder (often %TEMP%\Silent Process Exit or a LocalDumps path).</span>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4 mb-5">
+        <div class="rounded-xl bg-slate-900 border border-slate-700 p-4">
+          <div class="text-xs text-cyan-400 font-medium mb-1">Why this is stealthy</div>
+          <p class="text-sm text-slate-300">No crash, no WerFault command line that looks exotic to a casual observer, and the dump is created by a process defenders already trust.</p>
+        </div>
+        <div class="rounded-xl bg-slate-900 border border-slate-700 p-4">
+          <div class="text-xs text-amber-400 font-medium mb-1">Detection pivot</div>
+          <p class="text-sm text-slate-300">Registry writes under Image File Execution Options\lsass.exe and SilentProcessExit\lsass.exe are rare in normal environments and highly suspicious.</p>
+        </div>
+      </div>
+
+      <!-- Sequential Quiz -->
+      <div class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-5" data-quiz="silent">
+        <div class="flex justify-between items-center mb-4">
+          <h4 class="font-semibold text-violet-400">Quick Check</h4>
+          <span class="text-xs text-slate-400">Question <span class="q-num">1</span> of 2</span>
+        </div>
+        <div class="quiz-card active" data-q="0">
+          <p class="text-sm text-slate-200 mb-3">What is the key property of RtlReportSilentProcessExit that makes this technique attractive?</p>
+          <div class="space-y-2">
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">It crashes LSASS so the dump is guaranteed to be complete</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="true">It notifies WER of a silent exit without actually terminating the process</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">It disables PPL on LSASS for the duration of the dump</button>
+          </div>
+          <div class="feedback hidden mt-3 text-sm p-3 rounded-lg"></div>
+          <button class="next-btn hidden mt-3 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium">Next Question →</button>
+        </div>
+        <div class="quiz-card" data-q="1">
+          <p class="text-sm text-slate-200 mb-3">Which registry locations should a purple team especially monitor when hunting this technique?</p>
+          <div class="space-y-2">
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="true">IFEO\lsass.exe GlobalFlag and SilentProcessExit\lsass.exe</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">Only the Run key under HKCU\Software\Microsoft\Windows\CurrentVersion</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">The AppInit_DLLs value</button>
+          </div>
+          <div class="feedback hidden mt-3 text-sm p-3 rounded-lg"></div>
+          <button class="next-btn hidden mt-3 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium">See Summary</button>
+        </div>
+        <div class="quiz-summary hidden mt-4 p-4 rounded-lg bg-slate-900 border border-slate-700 text-sm"></div>
+      </div>
+    </section>
+
+    <!-- ========== SHTINKERING ========== -->
+    <section id="shtinkering" class="section-card">
+      <h2 class="text-2xl font-bold text-white mb-4">4. Technique B – LSASS Shtinkering (ALPC/LPC Report)</h2>
+
+      <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-5 mb-5">
+        <h3 class="font-semibold text-white mb-3">Simple Explanation</h3>
+        <p class="text-slate-300 text-sm leading-relaxed">
+          Instead of using the Silent Process Exit registry path, this technique (presented at DEF CON 30 by Deep Instinct researchers) talks directly to the WER service over its internal LPC/ALPC port. The attacker crafts a message that says “an exception occurred inside LSASS” and supplies the necessary process and thread handles. WER believes the report, spawns WerFault, and a dump is written — again without LSASS actually crashing. The name “Shtinkering” comes from the Hebrew word for “snitching.”
+        </p>
+      </div>
+
+      <div class="rounded-xl bg-slate-900 border border-slate-700 p-5 mb-5">
+        <h3 class="font-semibold text-white mb-3">Why it matters for purple teams</h3>
+        <p class="text-sm text-slate-300 mb-3">At the time of discovery the technique bypassed multiple commercial EDRs because their logic assumed that a dump generated by WerFault was always the result of a genuine crash. The attack forces a re-evaluation of that assumption.</p>
+        <div class="text-xs text-slate-500">Prerequisite often required: LocalDumps DumpType set to full (2) under HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps.</div>
+      </div>
+
+      <div class="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 mb-5">
+        <div class="text-sm font-medium text-amber-400 mb-1">Common confusion</div>
+        <p class="text-sm text-slate-300">People mix this up with the Silent Process Exit technique. Both end with WerFault creating a dump, but the trigger mechanism is completely different (registry + RtlReportSilentProcessExit vs. direct LPC message to the service).</p>
+      </div>
+    </section>
+
+    <!-- ========== WERFAULTSECURE ========== -->
+    <section id="werfaultsecure" class="section-card">
+      <h2 class="text-2xl font-bold text-white mb-4">5. Technique C – WerFaultSecure + Old Binary (Modern Windows 11)</h2>
+
+      <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-5 mb-5">
+        <h3 class="font-semibold text-white mb-3">Simple Explanation</h3>
+        <p class="text-slate-300 text-sm leading-relaxed">
+          On modern Windows, LSASS is frequently protected by PPL. Ordinary processes cannot open it with the rights needed for a dump. However, <code class="text-cyan-400">WerFaultSecure.exe</code> is itself a PPL process (WinTCB level) designed to dump other protected processes when they crash. Researchers discovered that the version of WerFaultSecure that shipped with Windows 8.1 still contains logic that can write an <em>unencrypted</em> dump. By bringing that older binary onto a Windows 11 machine and launching it under the correct PPL level (via CreateProcessAsPPL), an attacker can obtain a usable MiniDump of LSASS. The popular PoC tool WSASS automates the process and additionally renames the dump magic header to PNG so that simple signature-based scanners may ignore the file.
+        </p>
+      </div>
+
+      <div class="rounded-2xl border border-slate-700 bg-slate-900/60 p-5 mb-5 relative" id="wsass-flow">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4">WSASS / WerFaultSecure Flow (hover each stage)</div>
+        <div class="grid sm:grid-cols-4 gap-3 text-sm">
+          <div class="diagram-node rounded-xl bg-slate-800 border border-slate-600 p-4" data-tip="ppl" data-title="CreateProcessAsPPL" data-body="The loader starts the old WerFaultSecure.exe with the WinTCB PPL protection level so that it is allowed to open LSASS." data-miscon="Without matching or exceeding LSASS’s PPL level the dump simply fails.">
+            <div class="font-semibold text-cyan-400 mb-1">1. Launch as PPL</div>
+            <div class="text-xs text-slate-400">Old WerFaultSecure under WinTCB</div>
+          </div>
+          <div class="diagram-node rounded-xl bg-slate-800 border border-slate-600 p-4" data-tip="args" data-title="Undocumented Arguments" data-body="Flags such as /h /pid /tid /file /encfile /cancel tell the binary to perform a secure dump of the supplied process and write both encrypted and unencrypted handles." data-miscon="These arguments are not publicly documented by Microsoft; they were recovered by reverse engineering.">
+            <div class="font-semibold text-cyan-400 mb-1">2. Dump Request</div>
+            <div class="text-xs text-slate-400">/pid of LSASS + handles</div>
+          </div>
+          <div class="diagram-node rounded-xl bg-slate-800 border border-slate-600 p-4" data-tip="header" data-title="Header Swap" data-body="WSASS overwrites the first four bytes of the dump (MDMP) with the PNG magic (89 50 4E 47). The file now looks like an image to many scanners." data-miscon="The dump is still a perfectly valid MiniDump once the header is restored offline.">
+            <div class="font-semibold text-cyan-400 mb-1">3. PNG Masking</div>
+            <div class="text-xs text-slate-400">MDMP → PNG header</div>
+          </div>
+          <div class="diagram-node rounded-xl bg-slate-800 border border-slate-600 p-4" data-tip="restore" data-title="Resume LSASS" data-body="If the dump process suspended any LSASS threads, the loader resumes them with minimal rights so the system stays stable." data-miscon="Leaving LSASS suspended would be noisy and risk system instability.">
+            <div class="font-semibold text-cyan-400 mb-1">4. Cleanup</div>
+            <div class="text-xs text-slate-400">Resume + leave .png</div>
+          </div>
+        </div>
+        <div id="wsass-tooltip" class="tooltip"></div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4 mb-5">
+        <div class="rounded-xl bg-slate-900 border border-slate-700 p-4">
+          <div class="text-xs text-slate-500 mb-1">Analogy</div>
+          <p class="text-sm text-slate-300">You bring an old, trusted security guard (the Windows 8.1 binary) who still has the master key to the vault, dress him in the modern uniform (PPL), and ask him to open the vault for you. The new guards recognise the uniform and let him through.</p>
+        </div>
+        <div class="rounded-xl bg-slate-900 border border-slate-700 p-4">
+          <div class="text-xs text-slate-500 mb-1">Purple-team implication</div>
+          <p class="text-sm text-slate-300">Monitor for WerFaultSecure.exe executing from non-System32 paths, large PNG files created by unusual parents, and the combination of CreateProcessAsPPL-style activity followed by a dump-sized file write.</p>
+        </div>
+      </div>
+
+      <!-- Sequential Quiz -->
+      <div class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-5" data-quiz="secure">
+        <div class="flex justify-between items-center mb-4">
+          <h4 class="font-semibold text-violet-400">Quick Check</h4>
+          <span class="text-xs text-slate-400">Question <span class="q-num">1</span> of 2</span>
+        </div>
+        <div class="quiz-card active" data-q="0">
+          <p class="text-sm text-slate-200 mb-3">Why is an older (Windows 8.1) WerFaultSecure binary used on Windows 11?</p>
+          <div class="space-y-2">
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="true">The older version can produce an unencrypted dump of PPL processes</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">Newer versions refuse to run at all under PPL</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">It is smaller and therefore easier to transfer</button>
+          </div>
+          <div class="feedback hidden mt-3 text-sm p-3 rounded-lg"></div>
+          <button class="next-btn hidden mt-3 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium">Next Question →</button>
+        </div>
+        <div class="quiz-card" data-q="1">
+          <p class="text-sm text-slate-200 mb-3">What does the PNG header swap achieve?</p>
+          <div class="space-y-2">
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">It encrypts the dump so only the attacker can read it</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="true">It disguises the MiniDump as an image file to evade simple signature or magic-byte checks</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">It compresses the dump to make exfiltration faster</button>
+          </div>
+          <div class="feedback hidden mt-3 text-sm p-3 rounded-lg"></div>
+          <button class="next-btn hidden mt-3 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium">See Summary</button>
+        </div>
+        <div class="quiz-summary hidden mt-4 p-4 rounded-lg bg-slate-900 border border-slate-700 text-sm"></div>
+      </div>
+    </section>
+
+    <!-- ========== DETECTION ========== -->
+    <section id="detection" class="section-card">
+      <h2 class="text-2xl font-bold text-white mb-4">6. Detection Engineering for Purple Teams</h2>
+
+      <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-5 mb-5">
+        <h3 class="font-semibold text-white mb-3">Simple Explanation</h3>
+        <p class="text-slate-300 text-sm leading-relaxed">
+          Because the dump is performed by a legitimate, signed binary, name-based allow-listing fails. Effective detection looks at the <em>context</em>: parent process, command-line arguments that reference the LSASS PID, unusual file paths for WerFaultSecure, large files with PNG extensions that contain MiniDump structures, and registry changes that enable full dumps or silent-exit monitoring for LSASS.
+        </p>
+      </div>
+
+      <div class="overflow-x-auto mb-5">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="text-left text-slate-400 border-b border-slate-700">
+              <th class="py-2 pr-4">Signal</th>
+              <th class="py-2 pr-4">Source</th>
+              <th class="py-2">Why it matters</th>
+            </tr>
+          </thead>
+          <tbody class="text-slate-300">
+            <tr class="border-b border-slate-800">
+              <td class="py-2.5 pr-4 font-mono text-xs">WerFaultSecure from non-System32</td>
+              <td class="py-2.5 pr-4">Sysmon 1 / 4688</td>
+              <td class="py-2.5">Strong indicator of the modern PPL technique</td>
+            </tr>
+            <tr class="border-b border-slate-800">
+              <td class="py-2.5 pr-4 font-mono text-xs">Large .png created by unusual parent</td>
+              <td class="py-2.5 pr-4">Sysmon 11</td>
+              <td class="py-2.5">Header-swapped dumps often land as PNG</td>
+            </tr>
+            <tr class="border-b border-slate-800">
+              <td class="py-2.5 pr-4 font-mono text-xs">SilentProcessExit / IFEO for lsass</td>
+              <td class="py-2.5 pr-4">Sysmon 13 / Registry</td>
+              <td class="py-2.5">Prerequisite for Technique A</td>
+            </tr>
+            <tr class="border-b border-slate-800">
+              <td class="py-2.5 pr-4 font-mono text-xs">WerFault -u -p <lsass pid></td>
+              <td class="py-2.5 pr-4">Command line</td>
+              <td class="py-2.5">Classic Shtinkering / Silent Exit footprint</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 pr-4 font-mono text-xs">DumpType = 2 under LocalDumps</td>
+              <td class="py-2.5 pr-4">Registry</td>
+              <td class="py-2.5">Often required for full dumps via WER</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rounded-xl bg-slate-900 border border-slate-700 p-5">
+        <h3 class="font-semibold text-cyan-400 mb-2">Purple-team testing mindset</h3>
+        <p class="text-sm text-slate-300">Emulate each technique in an isolated lab, confirm the telemetry that appears, then verify whether your production detections fire. If they do not, the gap is a concrete finding you can hand to the blue team with a ready-made playbook.</p>
+      </div>
+    </section>
+
+    <!-- ========== SYNTHESIS ========== -->
+    <section id="synthesis" class="section-card">
+      <h2 class="text-2xl font-bold text-white mb-4">Connections & Synthesis</h2>
+      <div class="rounded-xl border border-slate-700 bg-slate-900/50 p-5 space-y-4 text-sm text-slate-300">
+        <p>All three techniques share the same end state: a MiniDump of LSASS written by a trusted Windows component. They differ only in the <em>trigger</em>:</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li><strong>Silent Process Exit</strong> – registry configuration + RtlReportSilentProcessExit</li>
+          <li><strong>Shtinkering</strong> – direct LPC/ALPC message to the WER service</li>
+          <li><strong>WerFaultSecure</strong> – bring an older PPL-capable binary and run it at WinTCB</li>
+        </ul>
+        <p>Detection therefore cannot rely on “is this WerFault?” It must answer “is this WerFault activity <em>expected</em> given the parent, arguments, dump location, and surrounding registry changes?”</p>
+        <p>Modern mitigations (RunAsPPL, Credential Guard, ASR rules that block LSASS credential dumping) raise the cost of the classic methods, which is why the PPL-aware WerFaultSecure technique appeared. Purple teams should continuously re-evaluate coverage as both offensive and defensive capabilities evolve.</p>
+      </div>
+    </section>
+
+    <!-- ========== MASTERY QUIZ ========== -->
+    <section id="mastery" class="section-card">
+      <h2 class="text-2xl font-bold text-white mb-4">Mastery Quiz</h2>
+      <div class="rounded-xl border border-violet-500/30 bg-violet-500/5 p-5" data-quiz="mastery">
+        <div class="flex justify-between items-center mb-4">
+          <h4 class="font-semibold text-violet-400">Final Check – One question at a time</h4>
+          <span class="text-xs text-slate-400">Question <span class="q-num">1</span> of 4</span>
+        </div>
+
+        <div class="quiz-card active" data-q="0">
+          <p class="text-sm text-slate-200 mb-3">Which statement best captures the core idea of all WER-based LSASS dump techniques?</p>
+          <div class="space-y-2">
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">They exploit a buffer overflow inside WerFault.exe</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="true">They coerce the legitimate crash-dump pipeline into dumping a healthy LSASS process</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">They disable the Windows Error Reporting service so no logs are generated</button>
+          </div>
+          <div class="feedback hidden mt-3 text-sm p-3 rounded-lg"></div>
+          <button class="next-btn hidden mt-3 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium">Next →</button>
+        </div>
+
+        <div class="quiz-card" data-q="1">
+          <p class="text-sm text-slate-200 mb-3">In the WerFaultSecure technique, what is the primary purpose of launching the binary under WinTCB PPL?</p>
+          <div class="space-y-2">
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="true">To obtain the necessary rights to open and dump a PPL-protected LSASS</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">To hide the process from Task Manager</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">To prevent the dump file from being written to disk</button>
+          </div>
+          <div class="feedback hidden mt-3 text-sm p-3 rounded-lg"></div>
+          <button class="next-btn hidden mt-3 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium">Next →</button>
+        </div>
+
+        <div class="quiz-card" data-q="2">
+          <p class="text-sm text-slate-200 mb-3">A large PNG file appears on disk shortly after a non-standard WerFaultSecure execution. What should a hunter do next?</p>
+          <div class="space-y-2">
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">Ignore it — PNG files are never MiniDumps</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="true">Examine the first bytes; if they are PNG magic but the rest looks like a MiniDump, treat it as a strong indicator and restore the MDMP header offline for analysis</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">Delete the file immediately without further investigation</button>
+          </div>
+          <div class="feedback hidden mt-3 text-sm p-3 rounded-lg"></div>
+          <button class="next-btn hidden mt-3 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium">Next →</button>
+        </div>
+
+        <div class="quiz-card" data-q="3">
+          <p class="text-sm text-slate-200 mb-3">Which defensive control most directly raises the cost of classic user-mode LSASS dumps (including many WER variants)?</p>
+          <div class="space-y-2">
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">Disabling the Windows Firewall</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="true">Enabling RunAsPPL for LSASS and Credential Guard</button>
+            <button class="quiz-opt w-full text-left px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-sm" data-correct="false">Turning off Sysmon</button>
+          </div>
+          <div class="feedback hidden mt-3 text-sm p-3 rounded-lg"></div>
+          <button class="next-btn hidden mt-3 px-4 py-2 bg-violet-600 hover:bg-violet-500 rounded-lg text-sm font-medium">Finish</button>
+        </div>
+
+        <div class="quiz-summary hidden mt-4 p-4 rounded-lg bg-slate-900 border border-slate-700 text-sm"></div>
+      </div>
+    </section>
+
+    <!-- ========== RETENTION ========== -->
+    <section id="retention" class="section-card">
+      <h2 class="text-2xl font-bold text-white mb-4">Mastery & Retention Tools</h2>
+
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <div class="rounded-xl bg-slate-900 border border-slate-700 p-5">
+          <h3 class="font-semibold text-white mb-3">Key Takeaways</h3>
+          <ul class="space-y-2 text-sm text-slate-300">
+            <li class="flex gap-2"><span class="text-cyan-400">1.</span> WER is a legitimate dump factory; attackers just supply a false “crash” signal.</li>
+            <li class="flex gap-2"><span class="text-cyan-400">2.</span> Three main triggers: Silent Process Exit, direct LPC report, and old WerFaultSecure under PPL.</li>
+            <li class="flex gap-2"><span class="text-cyan-400">3.</span> Detection lives in context (parent, args, path, registry, file magic + size), not binary names.</li>
+            <li class="flex gap-2"><span class="text-cyan-400">4.</span> PPL and Credential Guard raise the bar; they do not eliminate the need for behavioural monitoring.</li>
+          </ul>
+        </div>
+        <div class="rounded-xl bg-slate-900 border border-slate-700 p-5">
+          <h3 class="font-semibold text-white mb-3">Spaced Review Schedule</h3>
+          <ul class="space-y-2 text-sm text-slate-300">
+            <li><span class="text-cyan-400 font-medium">Day 1</span> – Re-draw the three technique flows from memory</li>
+            <li><span class="text-cyan-400 font-medium">Day 3</span> – Write one detection idea for each technique</li>
+            <li><span class="text-cyan-400 font-medium">Day 7</span> – Explain the whole page to a colleague (or rubber duck)</li>
+            <li><span class="text-cyan-400 font-medium">Day 14</span> – Re-run a lab emulation and check whether your detections still fire</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-5">
+        <h3 class="font-semibold text-cyan-400 mb-2">Teach it to someone</h3>
+        <p class="text-sm text-slate-300 mb-3">In the next 48 hours, explain to a teammate (or write a short internal note) the difference between Silent Process Exit and the WerFaultSecure PPL technique, and list the three highest-value telemetry sources you would instrument first. Teaching forces the mental model to become durable.</p>
+        <p class="text-xs text-slate-500">If you can do that without looking back at this page, the knowledge is yours.</p>
+      </div>
+    </section>
+
+    <footer class="text-center text-xs text-slate-600 pt-8 border-t border-slate-800">
+      Purple Team Educational Resource · LSASS Dump via Windows Error Reporting · For authorised defensive testing only
+    </footer>
+  </main>
+</div>
+
+<script>
+  // Theme toggle
+  const html = document.documentElement;
+  const themeBtn = document.getElementById('theme-btn');
+  themeBtn.addEventListener('click', () => {
+    html.classList.toggle('dark');
+    if (!html.classList.contains('dark')) {
+      document.body.classList.remove('bg-slate-950', 'text-slate-200');
+      document.body.classList.add('bg-slate-100', 'text-slate-800');
+    } else {
+      document.body.classList.add('bg-slate-950', 'text-slate-200');
+      document.body.classList.remove('bg-slate-100', 'text-slate-800');
+    }
+  });
+
+  // Mermaid
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' });
+
+  // Tooltip system
+  function setupTooltips(containerId, tooltipId) {
+    const container = document.getElementById(containerId);
+    const tip = document.getElementById(tooltipId);
+    if (!container || !tip) return;
+    container.querySelectorAll('.diagram-node').forEach(node => {
+      node.addEventListener('mouseenter', e => {
+        const title = node.dataset.title || '';
+        const body = node.dataset.body || '';
+        const miscon = node.dataset.miscon || '';
+        tip.innerHTML = `<strong>${title}</strong><br>${body}${miscon ? `<span class="miscon">⚠ Common confusion: ${miscon}</span>` : ''}`;
+        tip.classList.add('visible');
+        const rect = node.getBoundingClientRect();
+        const cRect = container.getBoundingClientRect();
+        tip.style.left = (rect.left - cRect.left + rect.width/2 - 140) + 'px';
+        tip.style.top = (rect.bottom - cRect.top + 8) + 'px';
+      });
+      node.addEventListener('mouseleave', () => tip.classList.remove('visible'));
+    });
+  }
+  setupTooltips('hero-diagram', 'hero-tooltip');
+  setupTooltips('wer-flow', 'wer-tooltip');
+  setupTooltips('wsass-flow', 'wsass-tooltip');
+
+  // Sequential quizzes
+  document.querySelectorAll('[data-quiz]').forEach(quiz => {
+    let current = 0;
+    let correctCount = 0;
+    const cards = quiz.querySelectorAll('.quiz-card');
+    const total = cards.length;
+    const qNum = quiz.querySelector('.q-num');
+    const summary = quiz.querySelector('.quiz-summary');
+
+    function showCard(i) {
+      cards.forEach(c => c.classList.remove('active'));
+      if (i < total) {
+        cards[i].classList.add('active');
+        qNum.textContent = i + 1;
+      }
+    }
+
+    cards.forEach((card, idx) => {
+      const opts = card.querySelectorAll('.quiz-opt');
+      const feedback = card.querySelector('.feedback');
+      const nextBtn = card.querySelector('.next-btn');
+      opts.forEach(opt => {
+        opt.addEventListener('click', () => {
+          if (opt.disabled) return;
+          opts.forEach(o => o.disabled = true);
+          const isCorrect = opt.dataset.correct === 'true';
+          if (isCorrect) {
+            correctCount++;
+            opt.classList.add('border-green-500', 'bg-green-500/10');
+            feedback.className = 'feedback mt-3 text-sm p-3 rounded-lg bg-green-500/10 border border-green-500/30 text-green-300';
+            feedback.textContent = 'Correct. ' + (opt.dataset.explain || 'Well reasoned.');
+          } else {
+            opt.classList.add('border-red-500', 'bg-red-500/10');
+            const right = card.querySelector('[data-correct="true"]');
+            if (right) right.classList.add('border-green-500', 'bg-green-500/10');
+            feedback.className = 'feedback mt-3 text-sm p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-300';
+            feedback.textContent = 'Not quite. The correct choice is highlighted.';
+          }
+          feedback.classList.remove('hidden');
+          nextBtn.classList.remove('hidden');
+        });
+      });
+      nextBtn.addEventListener('click', () => {
+        if (idx === total - 1) {
+          cards.forEach(c => c.classList.remove('active'));
+          summary.classList.remove('hidden');
+          const pct = Math.round((correctCount / total) * 100);
+          summary.innerHTML = `<div class="font-semibold text-white mb-2">Score: ${correctCount}/${total} (${pct}%)</div>
+            <p class="text-slate-400">${pct >= 75 ? 'Strong grasp — you are ready to map these techniques to your own detections.' : 'Review the sections where you missed questions, then retry the quiz later.'}</p>`;
+        } else {
+          showCard(idx + 1);
+        }
+      });
+    });
+  });
+
+  // Progress bar
+  const sections = document.querySelectorAll('.section-card');
+  const progressBar = document.getElementById('progress-bar');
+  const progressLabel = document.getElementById('progress-label');
+  function updateProgress() {
+    const scroll = window.scrollY + window.innerHeight / 2;
+    let completed = 0;
+    sections.forEach(s => {
+      if (s.offsetTop < scroll) completed++;
+    });
+    const pct = Math.min(100, Math.round((completed / sections.length) * 100));
+    progressBar.style.width = pct + '%';
+    progressLabel.textContent = pct + '%';
+  }
+  window.addEventListener('scroll', updateProgress);
+  updateProgress();
+</script>
+</body>
+</html>
