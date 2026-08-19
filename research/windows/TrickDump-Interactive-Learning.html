@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrickDump Mastery — Interactive Learning Experience</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        brand: { 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7' }
+      }
+    }
+  }
+}
+</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  body { font-family: 'Inter', system-ui, sans-serif; }
+  code, .mono { font-family: 'JetBrains Mono', monospace; }
+  .tooltip {
+    visibility: hidden; opacity: 0; transition: opacity 0.2s, visibility 0.2s;
+    position: absolute; z-index: 50; width: max-content; max-width: 280px;
+    background: #0f172a; color: #e2e8f0; border: 1px solid #334155;
+    border-radius: 0.5rem; padding: 0.75rem; font-size: 0.8rem; line-height: 1.4;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+  }
+  .has-tooltip:hover .tooltip { visibility: visible; opacity: 1; }
+  .mermaid { background: transparent !important; }
+  .quiz-option:hover { transform: translateY(-1px); }
+  .quiz-option.correct { background: #065f46 !important; border-color: #10b981 !important; }
+  .quiz-option.wrong { background: #7f1d1d !important; border-color: #ef4444 !important; }
+  .print-only { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    #cheatsheet, #cheatsheet * { visibility: visible; }
+    #cheatsheet { position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; }
+    .no-print { display: none !important; }
+    .print-only { display: block !important; }
+  }
+  .progress-bar { transition: width 0.4s ease; }
+  details summary { cursor: pointer; }
+  details[open] summary { margin-bottom: 0.75rem; }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen">
+
+<!-- Sticky Header + Progress -->
+<header class="sticky top-0 z-40 bg-slate-950/95 backdrop-blur border-b border-slate-800 no-print">
+  <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <span class="text-brand-400 font-bold text-lg">TrickDump</span>
+      <span class="text-xs text-slate-500 hidden sm:inline">Interactive Mastery Path</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="hidden sm:flex items-center gap-2 text-xs text-slate-400">
+        <span id="progress-text">0%</span>
+        <div class="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div id="progress-bar" class="progress-bar h-full bg-brand-500 rounded-full" style="width:0%"></div>
+        </div>
+      </div>
+      <button id="theme-toggle" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300" title="Toggle light/dark">
+        <svg id="sun-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        <svg id="moon-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Sticky TOC (desktop) -->
+<nav id="toc" class="fixed left-4 top-24 w-48 hidden xl:block text-sm no-print z-30">
+  <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 space-y-1">
+    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Navigate</p>
+    <a href="#prereqs" class="block px-2 py-1 rounded hover:bg-slate-800 text-slate-400 hover:text-brand-400">Prerequisites</a>
+    <a href="#hero" class="block px-2 py-1 rounded hover:bg-slate-800 text-slate-400 hover:text-brand-400">Big Picture</a>
+    <a href="#mental-model" class="block px-2 py-1 rounded hover:bg-slate-800 text-slate-400 hover:text-brand-400">Core Mental Model</a>
+    <a href="#deep-dive" class="block px-2 py-1 rounded hover:bg-slate-800 text-slate-400 hover:text-brand-400">Deep Dive</a>
+    <a href="#connections" class="block px-2 py-1 rounded hover:bg-slate-800 text-slate-400 hover:text-brand-400">Connections</a>
+    <a href="#game" class="block px-2 py-1 rounded hover:bg-slate-800 text-slate-400 hover:text-brand-400">Learning Game</a>
+    <a href="#quiz" class="block px-2 py-1 rounded hover:bg-slate-800 text-slate-400 hover:text-brand-400">Mastery Quiz</a>
+    <a href="#cheatsheet" class="block px-2 py-1 rounded hover:bg-slate-800 text-slate-400 hover:text-brand-400">Cheatsheet</a>
+  </div>
+</nav>
+
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-16">
+
+<!-- ========== PREREQUISITES ========== -->
+<section id="prereqs" class="scroll-mt-24">
+  <div class="bg-amber-950/40 border border-amber-800/50 rounded-2xl p-6">
+    <h2 class="text-xl font-bold text-amber-300 mb-4 flex items-center gap-2">
+      <span class="text-2xl">⚡</span> What You Need to Know First
+    </h2>
+    <p class="text-slate-300 mb-4">Before diving into TrickDump, make sure these ideas are solid. If any feel fuzzy, expand the refresher.</p>
+    
+    <div class="space-y-3">
+      <details class="bg-slate-900/60 rounded-xl border border-slate-800">
+        <summary class="px-4 py-3 font-medium text-slate-200">LSASS (Local Security Authority Subsystem Service)</summary>
+        <div class="px-4 pb-4 text-sm text-slate-400">
+          The Windows process that stores credentials in memory (NTLM hashes, Kerberos tickets, sometimes cleartext passwords). Attackers dump its memory to steal credentials. Defenders protect it with PPL, Credential Guard, and heavy monitoring of process handles and memory reads.
+        </div>
+      </details>
+      <details class="bg-slate-900/60 rounded-xl border border-slate-800">
+        <summary class="px-4 py-3 font-medium text-slate-200">Minidump / MiniDumpWriteDump</summary>
+        <div class="px-4 pb-4 text-sm text-slate-400">
+          A structured file format that captures process memory + metadata (modules, threads, system info). The classic Windows API <code class="text-brand-400">dbghelp!MiniDumpWriteDump</code> creates it. EDRs love hunting for this API call and for files that start with the “MDMP” magic bytes.
+        </div>
+      </details>
+      <details class="bg-slate-900/60 rounded-xl border border-slate-800">
+        <summary class="px-4 py-3 font-medium text-slate-200">NTAPI vs Win32 API</summary>
+        <div class="px-4 pb-4 text-sm text-slate-400">
+          Win32 APIs (kernel32, advapi32…) are high-level wrappers. NTAPIs live in ntdll.dll and talk more directly to the kernel. Many EDRs hook the Win32 layer. Calling pure NTAPIs (or unhooking ntdll first) is a common evasion pattern.
+        </div>
+      </details>
+      <details class="bg-slate-900/60 rounded-xl border border-slate-800">
+        <summary class="px-4 py-3 font-medium text-slate-200">SeDebugPrivilege</summary>
+        <div class="px-4 pb-4 text-sm text-slate-400">
+          A powerful privilege that lets a process open almost any other process (including LSASS) with full access. Must be enabled on the token before many dump techniques work. Token adjustment is a high-signal detection opportunity.
+        </div>
+      </details>
+      <details class="bg-slate-900/60 rounded-xl border border-slate-800">
+        <summary class="px-4 py-3 font-medium text-slate-200">PPL (Protected Process Light)</summary>
+        <div class="px-4 pb-4 text-sm text-slate-400">
+          When LSASS runs as a Protected Process Light, user-mode processes (even as SYSTEM) cannot open it with the rights needed for memory reading. TrickDump (and most user-mode dumpers) fail against PPL.
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ========== HERO + BIG PICTURE ========== -->
+<section id="hero" class="scroll-mt-24">
+  <div class="text-center mb-10">
+    <h1 class="text-3xl sm:text-4xl font-bold text-white mb-3">TrickDump</h1>
+    <p class="text-lg text-slate-400 max-w-xl mx-auto">Dump LSASS memory without ever creating a Minidump file on the target. Split the work, use only NTAPIs, rebuild the dump later.</p>
+  </div>
+
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 mb-8">
+    <h3 class="text-sm font-semibold text-brand-400 uppercase tracking-wider mb-4">The Big Picture — Why This Exists</h3>
+    <p class="text-slate-300 mb-6 leading-relaxed">
+      Classic dump tools call <code class="text-brand-400">MiniDumpWriteDump</code> or write a file that starts with the MDMP signature. Defenders watch for those exact artifacts. TrickDump never produces a valid Minidump on the victim. It produces three tiny JSON metadata files and one ZIP of raw memory pages. The real Minidump is hand-crafted later — usually on the attacker’s machine — by a Python script.
+    </p>
+
+    <div class="bg-slate-950 rounded-xl p-4 overflow-x-auto">
+      <div class="mermaid">
+flowchart LR
+  subgraph Victim["Victim Machine"]
+    L[Lock.exe<br/>OS Version]
+    S[Shock.exe<br/>Modules]
+    B[Barrel.exe<br/>Memory Regions]
+    L --> J1[lock.json]
+    S --> J2[shock.json]
+    B --> J3[barrel.json]
+    B --> Z[barrel.zip]
+  end
+  subgraph Attacker["Attacker Machine"]
+    PY[create_dump.py]
+    DMP[lsass.dmp<br/>Valid Minidump]
+  end
+  J1 --> PY
+  J2 --> PY
+  J3 --> PY
+  Z --> PY
+  PY --> DMP
+  style Victim fill:#1e293b,stroke:#334155
+  style Attacker fill:#0f172a,stroke:#0ea5e9
+      </div>
+    </div>
+    <p class="text-xs text-slate-500 mt-3 text-center">Hover any node in the live diagrams below for deeper explanation. This high-level flow shows the core idea: never leave a usable dump on the target.</p>
+  </div>
+</section>
+
+<!-- ========== CORE MENTAL MODEL ========== -->
+<section id="mental-model" class="scroll-mt-24">
+  <h2 class="text-2xl font-bold text-white mb-2">Core Mental Model</h2>
+  <p class="text-slate-400 mb-6">Hold this picture in your head. Everything else is just details of how each piece works.</p>
+
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+    <div class="mermaid">
+flowchart TB
+  subgraph Goal["Goal: Credential Access without classic artifacts"]
+    direction TB
+    A["1. Enable SeDebugPrivilege<br/>NtOpenProcessToken + NtAdjustPrivilegesToken"]
+    B["2. Get LSASS handle<br/>NtGetNextProcess + NtQueryInformationProcess<br/>(avoid classic NtOpenProcess)"]
+    C["3. Collect metadata<br/>OS version + loaded modules"]
+    D["4. Walk & read memory regions<br/>NtQueryVirtualMemory + NtReadVirtualMemory"]
+    E["5. Store as JSON + ZIP<br/>Never build MDMP structure"]
+    F["6. Reconstruct later<br/>create_dump.py builds SystemInfo + ModuleList + Memory64List streams"]
+  end
+  A --> B --> C --> D --> E --> F
+  style Goal fill:#0f172a,stroke:#38bdf8
+    </div>
+
+    <div class="mt-6 grid sm:grid-cols-2 gap-4 text-sm">
+      <div class="bg-slate-950 rounded-xl p-4 border border-slate-800">
+        <h4 class="font-semibold text-emerald-400 mb-2">What makes it different</h4>
+        <ul class="space-y-1 text-slate-400">
+          <li>• No MiniDumpWriteDump</li>
+          <li>• No “MDMP” file on disk/network</li>
+          <li>• Three separate short-lived processes</li>
+          <li>• Pure NTAPI surface</li>
+          <li>• Optional ntdll unhooking</li>
+        </ul>
+      </div>
+      <div class="bg-slate-950 rounded-xl p-4 border border-slate-800">
+        <h4 class="font-semibold text-rose-400 mb-2">What still remains detectable</h4>
+        <ul class="space-y-1 text-slate-400">
+          <li>• SeDebugPrivilege enablement</li>
+          <li>• Handle to LSASS with VM_READ</li>
+          <li>• High volume of NtReadVirtualMemory</li>
+          <li>• Creation of the three JSON + ZIP files</li>
+          <li>• ntdll section overwrite activity</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== DEEP DIVE ========== -->
+<section id="deep-dive" class="scroll-mt-24 space-y-12">
+  <h2 class="text-2xl font-bold text-white">Deep Dive — The Three Stages</h2>
+
+  <!-- Lock -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+    <div class="bg-slate-800/50 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+      <span class="bg-brand-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">STAGE 1</span>
+      <h3 class="text-xl font-semibold text-white">Lock — OS Information</h3>
+    </div>
+    <div class="p-6 space-y-4">
+      <p class="text-slate-300 leading-relaxed">
+        The simplest stage. It only needs to know the Windows version so the later Minidump’s SystemInfo stream is correct. It calls one NTAPI:
+      </p>
+      <div class="bg-slate-950 rounded-lg p-4 mono text-sm text-brand-300">
+        RtlGetVersion → populates RTL_OSVERSIONINFOW (Major, Minor, Build)
+      </div>
+      <p class="text-slate-400 text-sm">
+        Output: <code class="text-brand-400">lock.json</code>. If you already know the target’s OS build, you can skip this stage entirely.
+      </p>
+      <details class="text-sm">
+        <summary class="text-slate-300 font-medium">Why this matters for the final dump</summary>
+        <p class="mt-2 text-slate-400">Mimikatz and pypykatz expect a correct SystemInfo stream. Wrong version numbers can cause parsing failures or incorrect architecture assumptions.</p>
+      </details>
+    </div>
+  </div>
+
+  <!-- Shock -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+    <div class="bg-slate-800/50 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+      <span class="bg-brand-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">STAGE 2</span>
+      <h3 class="text-xl font-semibold text-white">Shock — Modules + Handle</h3>
+    </div>
+    <div class="p-6 space-y-4">
+      <p class="text-slate-300 leading-relaxed">
+        This stage does two critical jobs: obtain a usable handle to LSASS and collect the module list (especially lsasrv.dll) needed for the ModuleList stream.
+      </p>
+      
+      <div class="bg-slate-950 rounded-xl p-4">
+        <h4 class="text-sm font-semibold text-brand-400 mb-3">Exact call sequence (simplified)</h4>
+        <ol class="space-y-2 text-sm mono text-slate-300">
+          <li>1. NtOpenProcessToken(GetCurrentProcess(), …)</li>
+          <li>2. NtAdjustPrivilegesToken(… SeDebugPrivilege …)</li>
+          <li>3. Loop NtGetNextProcess → NtQueryInformationProcess until ImageName contains “lsass”</li>
+          <li>4. NtQueryInformationProcess + NtReadVirtualMemory to walk PEB → LDR → module list</li>
+        </ol>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4 text-sm">
+        <div class="relative has-tooltip bg-slate-950 rounded-xl p-4 border border-slate-800">
+          <p class="font-medium text-emerald-400">Why NtGetNextProcess?</p>
+          <p class="text-slate-400 mt-1">Many EDRs specifically watch NtOpenProcess / OpenProcess targeting lsass.exe with high access masks. Walking processes with NtGetNextProcess is less common in detection rules.</p>
+          <div class="tooltip top-full left-0 mt-2">Common misconception: “Any handle to LSASS is equally bad.” Reality: the access mask and the API used both matter for detection logic.</div>
+        </div>
+        <div class="relative has-tooltip bg-slate-950 rounded-xl p-4 border border-slate-800">
+          <p class="font-medium text-emerald-400">Module list purpose</p>
+          <p class="text-slate-400 mt-1">The final Minidump needs at least lsasrv.dll base address and size so tools know where the credential structures live.</p>
+          <div class="tooltip top-full left-0 mt-2">Only the modules required for credential parsing are strictly necessary; a full module list is nicer but not mandatory for basic Mimikatz use.</div>
+        </div>
+      </div>
+      <p class="text-slate-400 text-sm">Output: <code class="text-brand-400">shock.json</code></p>
+    </div>
+  </div>
+
+  <!-- Barrel -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+    <div class="bg-slate-800/50 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+      <span class="bg-brand-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">STAGE 3</span>
+      <h3 class="text-xl font-semibold text-white">Barrel — Memory Regions</h3>
+    </div>
+    <div class="p-6 space-y-4">
+      <p class="text-slate-300 leading-relaxed">
+        The heavy lifting. With the handle from Shock (or obtained again), it walks every memory region and reads the ones that are committed and readable.
+      </p>
+      <div class="bg-slate-950 rounded-xl p-4 mono text-sm space-y-1 text-slate-300">
+        <div>NtQueryVirtualMemory → MEMORY_BASIC_INFORMATION</div>
+        <div>if (State == MEM_COMMIT && readable) → NtReadVirtualMemory</div>
+        <div>store raw bytes under a random filename inside barrel.zip</div>
+        <div>record {filename, base, size} in barrel.json</div>
+      </div>
+      <p class="text-slate-400 text-sm">
+        Result: <code class="text-brand-400">barrel.json</code> + <code class="text-brand-400">barrel.zip</code>. The ZIP never contains a Minidump header — just raw page contents with random names.
+      </p>
+    </div>
+  </div>
+
+  <!-- Reconstruction -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+    <div class="bg-slate-800/50 px-6 py-4 border-b border-slate-800 flex items-center gap-3">
+      <span class="bg-violet-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">OFF-TARGET</span>
+      <h3 class="text-xl font-semibold text-white">create_dump.py — Rebuild the Minidump</h3>
+    </div>
+    <div class="p-6 space-y-4">
+      <p class="text-slate-300">On the attacker side the three JSONs + ZIP are fed to a Python script that hand-crafts the three streams Mimikatz cares about:</p>
+      <ul class="text-sm text-slate-400 space-y-1 list-disc list-inside">
+        <li><strong class="text-slate-200">SystemInfo</strong> — from lock.json</li>
+        <li><strong class="text-slate-200">ModuleList</strong> — from shock.json</li>
+        <li><strong class="text-slate-200">Memory64List</strong> — from barrel.json + the raw pages in barrel.zip</li>
+      </ul>
+      <div class="bg-slate-950 rounded-lg p-4 mono text-xs text-brand-300 overflow-x-auto">
+python3 create_dump.py -l lock.json -s shock.json -b barrel.json -z barrel.zip -o lsass.dmp
+      </div>
+    </div>
+  </div>
+
+  <!-- Unhooking options -->
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+    <h3 class="text-lg font-semibold text-white mb-3">Optional: ntdll Unhooking</h3>
+    <p class="text-slate-400 text-sm mb-4">Each binary accepts an argument that overwrites the .text section of the loaded ntdll with a clean copy, bypassing user-mode hooks:</p>
+    <div class="grid sm:grid-cols-3 gap-3 text-sm">
+      <div class="bg-slate-950 rounded-xl p-4 border border-slate-800">
+        <p class="font-medium text-brand-400">disk</p>
+        <p class="text-slate-500 mt-1">Read clean ntdll from C:\Windows\System32\ntdll.dll (or custom path)</p>
+      </div>
+      <div class="bg-slate-950 rounded-xl p-4 border border-slate-800">
+        <p class="font-medium text-brand-400">knowndlls</p>
+        <p class="text-slate-500 mt-1">Pull from the KnownDlls section object</p>
+      </div>
+      <div class="bg-slate-950 rounded-xl p-4 border border-slate-800">
+        <p class="font-medium text-brand-400">debugproc</p>
+        <p class="text-slate-500 mt-1">Start a process in debug mode and copy its clean ntdll</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CONNECTIONS & SYNTHESIS ========== -->
+<section id="connections" class="scroll-mt-24">
+  <h2 class="text-2xl font-bold text-white mb-6">Connections & Synthesis</h2>
+  
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+    <div>
+      <h3 class="font-semibold text-brand-400 mb-2">How it relates to NativeDump</h3>
+      <p class="text-slate-400 text-sm">TrickDump is the author’s evolution of NativeDump. NativeDump builds the Minidump on the target (still using only NTAPIs). TrickDump deliberately never builds it on the target, trading some complexity for stronger artifact evasion.</p>
+    </div>
+    <div>
+      <h3 class="font-semibold text-brand-400 mb-2">Detection engineering implications</h3>
+      <p class="text-slate-400 text-sm mb-3">Because the classic dump-file and MiniDumpWriteDump signatures are gone, blue teams must lean on:</p>
+      <ul class="text-sm text-slate-400 space-y-1 list-disc list-inside">
+        <li>Sysmon Event ID 10 / Security 4656 — process access to lsass.exe</li>
+        <li>Token privilege adjustment events (SeDebugPrivilege)</li>
+        <li>High-rate NtReadVirtualMemory / NtQueryVirtualMemory against LSASS</li>
+        <li>File creation of *.json + *.zip in the same directory by short-lived processes</li>
+        <li>ntdll .text section modifications or KnownDlls / debug-process patterns</li>
+      </ul>
+    </div>
+    <div>
+      <h3 class="font-semibold text-brand-400 mb-2">Hard limits</h3>
+      <p class="text-slate-400 text-sm">Fails against PPL-protected LSASS. Requires 64-bit binaries. Originally needed a readable PEB (a later branch removes that requirement).</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== INTERACTIVE LEARNING GAME ========== -->
+<section id="game" class="scroll-mt-24">
+  <h2 class="text-2xl font-bold text-white mb-2">Interactive Learning Game</h2>
+  <p class="text-slate-400 mb-6">Put the stages in the correct order and match each to its primary job. Immediate feedback after every move.</p>
+
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6" id="game-container">
+    <p class="text-sm text-slate-400 mb-4">Drag the stages into the correct sequence (or use the buttons). Then match the description.</p>
+    
+    <div class="space-y-3 mb-6" id="stage-list">
+      <div class="stage-card bg-slate-800 border border-slate-700 rounded-xl p-4 flex items-center justify-between cursor-move" data-stage="barrel" draggable="true">
+        <span class="font-medium">Barrel</span>
+        <span class="text-xs text-slate-500">Memory regions → ZIP + JSON</span>
+      </div>
+      <div class="stage-card bg-slate-800 border border-slate-700 rounded-xl p-4 flex items-center justify-between cursor-move" data-stage="lock" draggable="true">
+        <span class="font-medium">Lock</span>
+        <span class="text-xs text-slate-500">OS version via RtlGetVersion</span>
+      </div>
+      <div class="stage-card bg-slate-800 border border-slate-700 rounded-xl p-4 flex items-center justify-between cursor-move" data-stage="shock" draggable="true">
+        <span class="font-medium">Shock</span>
+        <span class="text-xs text-slate-500">SeDebug + handle + modules</span>
+      </div>
+    </div>
+
+    <div class="flex gap-3 mb-4">
+      <button onclick="checkOrder()" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-lg text-sm font-medium">Check Order</button>
+      <button onclick="resetGame()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-sm">Reset</button>
+    </div>
+    <div id="game-feedback" class="text-sm min-h-[1.5rem]"></div>
+  </div>
+</section>
+
+<!-- ========== MASTERY QUIZ ========== -->
+<section id="quiz" class="scroll-mt-24">
+  <h2 class="text-2xl font-bold text-white mb-2">Final Mastery Quiz</h2>
+  <p class="text-slate-400 mb-6">One question at a time. Answer → immediate explanation → next.</p>
+
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6" id="quiz-container">
+    <div class="flex justify-between items-center mb-6">
+      <span class="text-sm text-slate-400" id="quiz-progress">Question 1 of 6</span>
+      <span class="text-sm text-slate-500" id="quiz-score">Score: 0</span>
+    </div>
+
+    <div id="quiz-question" class="mb-6">
+      <!-- filled by JS -->
+    </div>
+
+    <div id="quiz-options" class="space-y-3 mb-6">
+      <!-- filled by JS -->
+    </div>
+
+    <div id="quiz-feedback" class="hidden mb-4 p-4 rounded-xl text-sm"></div>
+
+    <button id="quiz-next" class="hidden px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-lg font-medium" onclick="nextQuestion()">Next Question →</button>
+    <div id="quiz-final" class="hidden text-center py-8">
+      <p class="text-2xl font-bold text-white mb-2">Quiz Complete</p>
+      <p class="text-slate-400 mb-4" id="final-score-text"></p>
+      <button onclick="restartQuiz()" class="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm">Restart Quiz</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CHEATSHEET ========== -->
+<section id="cheatsheet" class="scroll-mt-24">
+  <div class="flex items-center justify-between mb-6 no-print">
+    <h2 class="text-2xl font-bold text-white">Downloadable Cheatsheet</h2>
+    <button onclick="window.print()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm font-medium flex items-center gap-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+      Print / Download
+    </button>
+  </div>
+
+  <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 print:bg-white print:text-black print:border-0">
+    <div class="print-only text-center mb-6">
+      <h1 class="text-2xl font-bold">TrickDump Quick Reference</h1>
+      <p class="text-sm text-slate-600">ricardojoserf/TrickDump — LSASS dump without Minidump on target</p>
+    </div>
+
+    <div>
+      <h3 class="font-semibold text-brand-400 print:text-black mb-2">Execution (victim)</h3>
+      <pre class="bg-slate-950 print:bg-slate-100 rounded-lg p-3 text-xs mono overflow-x-auto">Lock.exe [disk|knowndlls|debugproc]
+Shock.exe [disk|knowndlls|debugproc]
+Barrel.exe [disk|knowndlls|debugproc]
+# or all-in-one:
+Trick.exe [disk|knowndlls|debugproc] [IP] [PORT]</pre>
+    </div>
+
+    <div>
+      <h3 class="font-semibold text-brand-400 print:text-black mb-2">Reconstruction (attacker)</h3>
+      <pre class="bg-slate-950 print:bg-slate-100 rounded-lg p-3 text-xs mono overflow-x-auto">python3 create_dump.py -l lock.json -s shock.json -b barrel.json -z barrel.zip -o lsass.dmp</pre>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4 text-sm">
+      <div>
+        <h3 class="font-semibold text-brand-400 print:text-black mb-2">Key NTAPIs</h3>
+        <ul class="space-y-1 text-slate-400 print:text-slate-700">
+          <li>RtlGetVersion</li>
+          <li>NtOpenProcessToken / NtAdjustPrivilegesToken</li>
+          <li>NtGetNextProcess / NtQueryInformationProcess</li>
+          <li>NtQueryVirtualMemory / NtReadVirtualMemory</li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="font-semibold text-brand-400 print:text-black mb-2">Outputs</h3>
+        <ul class="space-y-1 text-slate-400 print:text-slate-700">
+          <li>lock.json → SystemInfo</li>
+          <li>shock.json → ModuleList</li>
+          <li>barrel.json + barrel.zip → Memory64List</li>
+        </ul>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="font-semibold text-brand-400 print:text-black mb-2">Hard Limits</h3>
+      <p class="text-sm text-slate-400 print:text-slate-700">PPL blocks it • Must be 64-bit • PEB readability originally required (peb-unreadable branch exists)</p>
+    </div>
+
+    <div class="border-t border-slate-800 print:border-slate-300 pt-4">
+      <h3 class="font-semibold text-white print:text-black mb-2">Spaced Review Schedule</h3>
+      <ul class="text-sm text-slate-400 print:text-slate-700 space-y-1">
+        <li>• Tomorrow: Re-draw the three-stage flow from memory</li>
+        <li>• In 3 days: Explain why NtGetNextProcess is preferred over NtOpenProcess</li>
+        <li>• In 1 week: Write a detection idea that would catch Barrel’s memory walk</li>
+        <li>• In 2 weeks: Teach the whole technique to a peer (see prompt below)</li>
+      </ul>
+    </div>
+
+    <div class="bg-slate-950 print:bg-slate-100 rounded-xl p-4 border border-slate-800 print:border-slate-300">
+      <h3 class="font-semibold text-amber-300 print:text-amber-700 mb-2">Teach it to someone</h3>
+      <p class="text-sm text-slate-400 print:text-slate-700">
+        “Explain TrickDump to a teammate as if they have never heard of MinidumpWriteDump. Use the three-stage names, explain why the Minidump is built offline, and name at least two detection opportunities that remain.”
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer class="text-center text-xs text-slate-600 py-12 no-print">
+  Interactive Knowledge Experience • TrickDump • Built for deep understanding
+</footer>
+
+</main>
+
+<script>
+// Theme toggle
+const html = document.documentElement;
+const themeToggle = document.getElementById('theme-toggle');
+const sun = document.getElementById('sun-icon');
+const moon = document.getElementById('moon-icon');
+themeToggle.addEventListener('click', () => {
+  html.classList.toggle('dark');
+  sun.classList.toggle('hidden');
+  moon.classList.toggle('hidden');
+});
+
+// Progress tracking
+const sections = ['prereqs','hero','mental-model','deep-dive','connections','game','quiz','cheatsheet'];
+function updateProgress() {
+  const scroll = window.scrollY + window.innerHeight / 2;
+  let current = 0;
+  sections.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el && el.offsetTop < scroll) current = i + 1;
+  });
+  const pct = Math.round((current / sections.length) * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = pct + '%';
+}
+window.addEventListener('scroll', updateProgress);
+updateProgress();
+
+// Mermaid
+mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' });
+
+// ===== GAME =====
+let dragged = null;
+document.querySelectorAll('.stage-card').forEach(card => {
+  card.addEventListener('dragstart', e => { dragged = card; card.classList.add('opacity-50'); });
+  card.addEventListener('dragend', () => card.classList.remove('opacity-50'));
+  card.addEventListener('dragover', e => e.preventDefault());
+  card.addEventListener('drop', e => {
+    e.preventDefault();
+    if (dragged && dragged !== card) {
+      const list = document.getElementById('stage-list');
+      const cards = [...list.children];
+      const from = cards.indexOf(dragged);
+      const to = cards.indexOf(card);
+      if (from < to) list.insertBefore(dragged, card.nextSibling);
+      else list.insertBefore(dragged, card);
+    }
+  });
+});
+
+function checkOrder() {
+  const order = [...document.querySelectorAll('.stage-card')].map(c => c.dataset.stage);
+  const correct = ['lock','shock','barrel'];
+  const fb = document.getElementById('game-feedback');
+  if (order.join() === correct.join()) {
+    fb.innerHTML = '<span class="text-emerald-400 font-medium">Perfect sequence!</span> Lock → Shock → Barrel is the intended order. Lock can sometimes be skipped if OS version is already known.';
+    fb.className = 'text-sm text-emerald-400';
+  } else {
+    fb.innerHTML = '<span class="text-rose-400 font-medium">Not quite.</span> Remember: first get OS info (Lock), then obtain privileges + modules (Shock), then dump the actual memory pages (Barrel).';
+    fb.className = 'text-sm text-rose-400';
+  }
+}
+function resetGame() {
+  const list = document.getElementById('stage-list');
+  const cards = [...list.children];
+  // shuffle-ish back to original mixed order
+  list.appendChild(cards[1]); // lock
+  list.appendChild(cards[2]); // shock
+  list.appendChild(cards[0]); // barrel
+  document.getElementById('game-feedback').textContent = '';
+}
+
+// ===== QUIZ =====
+const questions = [
+  {
+    q: "Why does TrickDump deliberately avoid creating a Minidump file on the target?",
+    options: [
+      "Minidumps are too large to exfiltrate",
+      "EDRs and AVs heavily signature the MDMP magic bytes and MiniDumpWriteDump usage",
+      "Windows blocks Minidump creation for LSASS",
+      "JSON files compress better than dumps"
+    ],
+    correct: 1,
+    explain: "The whole point is artifact evasion. A valid Minidump (especially one starting with MDMP) and the MiniDumpWriteDump API are high-confidence signals for credential dumping. By never building that structure on the victim, those detections are bypassed."
+  },
+  {
+    q: "Which NTAPI does TrickDump prefer over the classic NtOpenProcess when obtaining a handle to LSASS?",
+    options: [
+      "NtCreateProcess",
+      "NtGetNextProcess (combined with NtQueryInformationProcess)",
+      "NtDuplicateObject",
+      "NtOpenThread"
+    ],
+    correct: 1,
+    explain: "Many detection rules specifically watch for NtOpenProcess / OpenProcess targeting lsass.exe with dangerous access masks. Walking the process list with NtGetNextProcess is less commonly alerted on."
+  },
+  {
+    q: "What does the Barrel stage store inside barrel.zip?",
+    options: [
+      "A complete Minidump with SystemInfo, ModuleList and Memory64List",
+      "Encrypted credentials extracted from LSASS",
+      "Raw memory region contents under random filenames (no MDMP header)",
+      "The full ntdll.dll for later unhooking"
+    ],
+    correct: 2,
+    explain: "Barrel only writes the raw bytes of each readable committed region. The filenames are random. The structured Minidump is built later by create_dump.py."
+  },
+  {
+    q: "Which of the following remains a strong detection opportunity even against TrickDump?",
+    options: [
+      "Looking for files that begin with the bytes 4D 44 4D 50",
+      "Alerting on any process that loads dbghelp.dll",
+      "Process-access events (Sysmon ID 10 / 4656) showing a handle to lsass.exe with VM_READ rights",
+      "Command-line arguments containing “-ma” or “MiniDump”"
+    ],
+    correct: 2,
+    explain: "Regardless of how the handle is obtained, the resulting access rights and the subsequent memory reads are still visible to kernel callbacks and Sysmon. Handle-based detections are more durable than file or API-name signatures."
+  },
+  {
+    q: "What happens if LSASS is protected by PPL?",
+    options: [
+      "TrickDump automatically falls back to a kernel driver",
+      "The technique fails — user-mode processes cannot open LSASS with the required rights",
+      "Only the Lock stage works",
+      "You must use the debugproc unhooking method"
+    ],
+    correct: 1,
+    explain: "Protected Process Light prevents even high-privileged user-mode code from obtaining a sufficiently powerful handle. This is a hard limit for TrickDump and most pure user-mode dumpers."
+  },
+  {
+    q: "Where is the final usable Minidump actually created?",
+    options: [
+      "In the victim’s TEMP folder under a random name",
+      "In memory only, never written to disk",
+      "On the attacker’s machine by create_dump.py using the three JSONs + ZIP",
+      "Inside the barrel.zip as a hidden stream"
+    ],
+    correct: 2,
+    explain: "The reconstruction step is deliberately moved off the target. This is the key design decision that removes the classic dump-file artifact from the victim’s disk, memory, and network traffic."
+  }
+];
+
+let currentQ = 0;
+let score = 0;
+let answered = false;
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentQ];
+  document.getElementById('quiz-progress').textContent = `Question ${currentQ + 1} of ${questions.length}`;
+  document.getElementById('quiz-score').textContent = `Score: ${score}`;
+  document.getElementById('quiz-question').innerHTML = `<p class="text-lg font-medium text-white">${q.q}</p>`;
+  const opts = document.getElementById('quiz-options');
+  opts.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'quiz-option w-full text-left px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 hover:border-brand-500 transition text-sm';
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(i);
+    opts.appendChild(btn);
+  });
+  document.getElementById('quiz-feedback').classList.add('hidden');
+  document.getElementById('quiz-next').classList.add('hidden');
+  document.getElementById('quiz-final').classList.add('hidden');
+}
+
+function selectAnswer(idx) {
+  if (answered) return;
+  answered = true;
+  const q = questions[currentQ];
+  const buttons = document.querySelectorAll('#quiz-options button');
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === q.correct) b.classList.add('correct');
+    else if (i === idx) b.classList.add('wrong');
+  });
+  const fb = document.getElementById('quiz-feedback');
+  fb.classList.remove('hidden');
+  if (idx === q.correct) {
+    score++;
+    fb.className = 'mb-4 p-4 rounded-xl text-sm bg-emerald-950/50 border border-emerald-800 text-emerald-200';
+    fb.innerHTML = `<strong>Correct.</strong> ${q.explain}`;
+  } else {
+    fb.className = 'mb-4 p-4 rounded-xl text-sm bg-rose-950/50 border border-rose-800 text-rose-200';
+    fb.innerHTML = `<strong>Not quite.</strong> ${q.explain}`;
+  }
+  document.getElementById('quiz-score').textContent = `Score: ${score}`;
+  document.getElementById('quiz-next').classList.remove('hidden');
+  if (currentQ === questions.length - 1) {
+    document.getElementById('quiz-next').textContent = 'See Results';
+  }
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= questions.length) {
+    document.getElementById('quiz-question').classList.add('hidden');
+    document.getElementById('quiz-options').classList.add('hidden');
+    document.getElementById('quiz-feedback').classList.add('hidden');
+    document.getElementById('quiz-next').classList.add('hidden');
+    document.getElementById('quiz-final').classList.remove('hidden');
+    document.getElementById('final-score-text').textContent = `You scored ${score} out of ${questions.length}. ${score === questions.length ? 'Flawless — you own this technique.' : score >= 4 ? 'Solid understanding. Review the misses and you’ll be ready.' : 'Revisit the Deep Dive sections and try again.'}`;
+  } else {
+    renderQuestion();
+  }
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  score = 0;
+  document.getElementById('quiz-question').classList.remove('hidden');
+  document.getElementById('quiz-options').classList.remove('hidden');
+  document.getElementById('quiz-final').classList.add('hidden');
+  renderQuestion();
+}
+
+renderQuestion();
+</script>
+</body>
+</html>
