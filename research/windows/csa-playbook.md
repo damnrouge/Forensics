@@ -78,3 +78,28 @@ victim                rdp-tcp#0          3  Active
 - Only sessions in **Active** state are reliable targets.
 - Session IDs are local to each machine (not unique across the domain).
 - Disconnected (Disc) sessions are less reliable for CSA.
+
+---
+
+## Step 3: Remote Registry
+
+**Why it is critical:**  
+Remote Registry is required for remote COM hijacking and for many remote CSA tooling paths. It allows the attacker to read/write registry keys on the target (for example to plant COM hijacks under the victim user’s HKCU or to inspect AppID/CLSID permissions). Without it, pure remote registry-based steps fail even if DCOM activation itself works.
+
+**Check status (from attacker):**
+```bash
+sc \\10.110.0.101 query RemoteRegistry
+```
+
+**Start the service:**
+```bash
+sc \\10.110.0.101 start RemoteRegistry
+```
+
+**Enable automatic start (optional):**
+```bash
+sc \\10.110.0.101 config RemoteRegistry start= auto
+sc \\10.110.0.101 start RemoteRegistry
+```
+
+**Note:** When using PsExec to run a local PoC already on the target, Remote Registry is less critical. It becomes essential for remote COM hijack + SpeechRuntimeMove-style attacks.
