@@ -6,6 +6,30 @@ With administrative privileges, an attacker can request activation of a COM clas
 **Primary source:** https://ipurple.team/2026/05/04/cross-session-activation/  
 **Focus:** Threat research, purple-team validation, detection engineering
 
+## Short Note (Jira / Diagram-Aligned)
+
+**Cross-Session Activation (CSA)** is a Windows COM/DCOM technique that allows a process running in one logon session to activate a COM object inside a **different user’s interactive session** and execute code under that user’s context.
+
+**High-level flow (matches the article diagram):**
+
+1. A COM class (CLSID) is configured with `RunAs = Interactive User`.
+2. Attacker calls `CoCreateInstance` to create the COM object.
+3. Attacker queries the `ISpecialSystemProperties` interface.
+4. Attacker calls `SetSessionId` to target a specific user’s active session.
+5. Attacker triggers object instantiation (via `StandardGetInstanceFromIStorage` or equivalent method), causing the COM server to run in the target user’s session.
+
+**Key prerequisites:**
+- Administrative privileges (registry modification + remote activation)
+- Active interactive session on the target host
+- COM class set to run as Interactive User
+- Launch/Activation permissions allowing the attacker
+
+**Result:** Code execution occurs in the security context of the logged-on user (instead of the attacker’s session), enabling stealthy lateral movement or session hijacking-style execution through legitimate COM hosts.
+
+This is useful for purple team testing because it abuses native Windows behaviour and can bypass many traditional process-injection detections.
+
+---
+
 ## Executive Summary
 
 Cross-Session Activation (CSA) is a Windows COM/DCOM abuse technique that can allow an attacker with elevated privileges to activate a COM object in another user's interactive logon session.
