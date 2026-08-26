@@ -49,3 +49,32 @@ Why: Needs full read of `HKLM\SOFTWARE\Classes\AppID` / `CLSID` and Launch/Acces
 **Recommended first targets:**
 1. Speech Runtime — `{38FE8DFE-B129-452B-A215-119382B89E3D}`
 2. Auth UI CredUI — `{924DC564-16A6-42EB-929A-9A61FA7DA06F}`
+
+---
+
+## Step 2: Session Enumeration
+
+**Requirement:** Cross-Session Activation requires an active interactive user session on the target. In this test an RDP session was used so the victim account remained in an Active state, which was then enumerated on the victim machine before activation.
+
+**Goal:** Identify active interactive sessions and their Session IDs on the target.
+
+**Command (from attacker):**
+```bash
+quser /server:<TARGET-IP>
+```
+
+**Example:**
+```bash
+quser /server:10.110.0.101
+```
+
+**Sample output:**
+```
+USERNAME              SESSIONNAME        ID  STATE
+victim                rdp-tcp#0          3  Active
+```
+
+**Notes:**
+- Only sessions in **Active** state are reliable targets.
+- Session IDs are local to each machine (not unique across the domain).
+- Disconnected (Disc) sessions are less reliable for CSA.
