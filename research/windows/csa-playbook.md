@@ -175,13 +175,25 @@ error code 0
 
 ## Test-2: Speech Runtime COM (SpeechRuntimeMove)
 
-**Why this test:**  
-Speech Runtime **is** in the PermissionHunter list. AppID `{1725704B-A716-4E04-8EF6-87ED4F0A180A}`, CLSID `{38FE8DFE-B129-452B-A215-119382B89E3D}` (Speech Named Pipe COM). Public PoC: [SpeechRuntimeMove](https://github.com/rtecCyberSec/SpeechRuntimeMove).
+PoC: [SpeechRuntimeMove](https://github.com/rtecCyberSec/SpeechRuntimeMove)
 
-**What it does:**  
-Activates Speech Runtime as Interactive User in a chosen session. `SpeechRuntime.exe` starts in the victim context. The PoC plants a COM hijack (Remote Registry + DLL drop) so that process loads attacker code and runs a command **as the logged-on user**.
+**What SpeechRuntimeMove.exe does**
 
-**Requires:** Admin on target, Remote Registry running, Active session, DLL on target.
+- SpeechRuntimeMove is a .NET tool for lateral movement as the logged-on user.
+- It combines remote DCOM activation of Speech Runtime with an HKCU COM hijack.
+- `mode=enum` lists remote sessions (ID, state, user) via `winsta.dll`.
+- `mode=attack` drops a DLL, writes the hijack, triggers SpeechRuntime, then cleans up.
+- The trigger CLSID is `{38FE8DFE-B129-452B-A215-119382B89E3D}` (Speech Named Pipe COM).
+- Creating that class starts `SpeechRuntime.exe` as Interactive User in the chosen session.
+- `SetSessionId` is what forces that session (same CSA idea as IHxExec).
+- The hijack CLSID is `{655D9BF9-3876-43D0-B6E8-C83C1224154C}` under the victim’s HKCU.
+- Remote Registry writes `InProcServer32` to your DLL path using the user’s SID.
+- SpeechRuntime then loads that DLL; `DllMain` runs your command as the victim.
+- DLL is copied over SMB to `dllpath` (example: `C:\Windows\Temp\pwned.dll`).
+- After ~5 seconds it deletes the registry key, stops Remote Registry, and removes the file.
+- Needs admin on the target, Remote Registry, SMB write, and an Active session.
+- Unlike IHxExec, this runs from the attacker box and matches the Speech Runtime CLSID in the scan.
+- Code runs as the victim user, so you do not need to steal tokens from LSASS.
 
 **Enum:**
 ```bash
@@ -194,4 +206,4 @@ SpeechRuntimeMove.exe mode=attack target=10.110.0.101 dllpath=C:\Windows\Temp\pa
 ```
 
 **Expected result:**  
-Same as Test-1 for the outcome: attacker triggers from G-Research-02; `calc.exe` (or payload) runs on G-Research-01 **as the victim user**. Unlike Test-1, this path matches the scanned CLSID and uses remote COM hijack rather than HelpPane `Execute()`.
+Attacker triggers from G-Research-02. `calc.exe` (or payload) runs on G-Research-01 **as the victim user**.
