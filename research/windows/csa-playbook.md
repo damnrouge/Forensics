@@ -57,6 +57,9 @@ Why: Needs full read of `HKLM\SOFTWARE\Classes\AppID` / `CLSID` and Launch/Acces
 1. Speech Runtime — `{38FE8DFE-B129-452B-A215-119382B89E3D}`
 2. Auth UI CredUI — `{924DC564-16A6-42EB-929A-9A61FA7DA06F}`
 
+**Why HelpPane was used even though it is not in the table above:**  
+HelpPane / IHxHelpPaneServer (`{8cec58ae-07a1-11d9-b15e-000d56bfe6ee}`) did **not** appear in this PermissionHunter filter. It was still chosen because public PoCs (**IHxExec / SessionHop**) already implement a working `Execute()` method on that interface, so it was the fastest way to validate CSA in the lab. Absence from the filtered list does not mean the class cannot work — the filter only shows objects that matched the chosen PermissionHunter criteria on that host. HelpPane was used first to prove the technique; Speech Runtime remains the best match from the actual scan.
+
 ---
 
 ## Step 2: Session Enumeration
@@ -118,6 +121,8 @@ sc \\10.110.0.101 start RemoteRegistry
 **What it does:**  
 IHxExec uses the IHxHelpPaneServer COM object (`RunAs = Interactive User`) to perform Cross-Session Activation. It calls `SetSessionId` then activates the COM class in the target session and invokes `Execute()` to run an arbitrary binary in the victim user’s context.
 
+HelpPane was used even though it is **not** in the PermissionHunter table above, because a ready PoC already exists and exposes `Execute()`. That made it the practical first test. The filtered table is still the source of truth for host-specific candidates (Speech Runtime first).
+
 **Transfer to victim machine:**  
 Copy IHxExec.exe to the target (e.g. `C:\Temp\IHxExec.exe`).
 
@@ -136,7 +141,7 @@ psexec \\10.110.0.101 -accepteula -s C:\Temp\IHxExec.exe -s 3 -c C:\Windows\Syst
 ```
 
 **Expected result:**  
-`calc.exe` launches on the **victim machine** under the **victim user’s session** (visible on the victim desktop). Exit code 0 indicates success.
+Admin only **triggers** IHxExec. `calc.exe` runs on the **victim machine** as the **victim user** (Interactive User session). Exit code 0 indicates success.
 
 **Lab observation:**  
 When the correct Active Session ID was used, output showed:
