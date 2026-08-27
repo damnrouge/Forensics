@@ -53,12 +53,22 @@ Why: Needs full read of `HKLM\SOFTWARE\Classes\AppID` / `CLSID` and Launch/Acces
 | {B8C54A54-355E-11D3-83EB-00A0C92A2F2D} | Windows Media Player | Interactive User | LocalLaunch. RemoteLaunch. LocalActivation. RemoteActivation | Everyone | AccessDenied | NT AUTHORITY\SELF |  |  | {91778246-9BE4-4713-A651-E833B853CC30} |
 | {f59bbec1-0907-4464-b04d-1da329585370} | ActivatableApplicationRegistrar | Interactive User | LocalLaunch. RemoteLaunch. LocalActivation. RemoteActivation | BUILTIN\Administrators | AccessAllowed |  |  |  | {dea794e0-1c1d-4363-b171-98d0b1703586} |
 
-**Recommended first targets:**
+**Recommended first targets from this scan:**
 1. Speech Runtime — `{38FE8DFE-B129-452B-A215-119382B89E3D}`
 2. Auth UI CredUI — `{924DC564-16A6-42EB-929A-9A61FA7DA06F}`
 
-**Why HelpPane was used even though it is not in the table above:**  
-HelpPane / IHxHelpPaneServer (`{8cec58ae-07a1-11d9-b15e-000d56bfe6ee}`) did **not** appear in this PermissionHunter filter. It was still chosen because public PoCs (**IHxExec / SessionHop**) already implement a working `Execute()` method on that interface, so it was the fastest way to validate CSA in the lab. Absence from the filtered list does not mean the class cannot work — the filter only shows objects that matched the chosen PermissionHunter criteria on that host. HelpPane was used first to prove the technique; Speech Runtime remains the best match from the actual scan.
+### Why HelpPane was used even though it is not in the table
+
+PermissionHunter answers: *which AppIDs have Interactive User + Remote Activation ACLs?*  
+It does **not** answer: *which of those objects can actually run a command?*
+
+Most rows above only prove launch/activation rights. They do not expose a public method like `Execute()`. Without that method (or a hijack path), listing them is not enough to get code execution.
+
+HelpPane / IHxHelpPaneServer (`{8cec58ae-07a1-11d9-b15e-000d56bfe6ee}`) was used for three technical reasons:
+
+1. **Known executable interface.** `IHxHelpPaneServer::Execute()` takes a file path and starts it in the target session. That is the missing piece for most objects in the table.
+2. **Different execution path than the filter.** IHxExec was copied to G-Research-01 and run **locally as SYSTEM via PsExec**. Local cross-session activation does not depend on the same RemoteLaunch ACL that PermissionHunter filtered on. So an object can be absent from the remote-activation table and still work when the PoC runs on the box.
+3. **Control test.** Using a documented interface first isolates CSA mechanics (SetSessionId + Interactive User + Active session) from CLSID research. After that control worked (Session 3, calc as victim), Speech Runtime is the correct next target because it **is** in the scan and has SpeechRuntimeMove.
 
 ---
 
@@ -121,7 +131,7 @@ sc \\10.110.0.101 start RemoteRegistry
 **What it does:**  
 IHxExec uses the IHxHelpPaneServer COM object (`RunAs = Interactive User`) to perform Cross-Session Activation. It calls `SetSessionId` then activates the COM class in the target session and invokes `Execute()` to run an arbitrary binary in the victim user’s context.
 
-HelpPane was used even though it is **not** in the PermissionHunter table above, because a ready PoC already exists and exposes `Execute()`. That made it the practical first test. The filtered table is still the source of truth for host-specific candidates (Speech Runtime first).
+See Step 1 for why HelpPane was used despite not appearing in the PermissionHunter table: it provides `Execute()`, and this lab path was local SYSTEM activation via PsExec, not remote DCOM filtered by that scan.
 
 **Transfer to victim machine:**  
 Copy IHxExec.exe to the target (e.g. `C:\Temp\IHxExec.exe`).
