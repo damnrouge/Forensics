@@ -57,18 +57,20 @@ Why: Needs full read of `HKLM\SOFTWARE\Classes\AppID` / `CLSID` and Launch/Acces
 1. Speech Runtime — `{38FE8DFE-B129-452B-A215-119382B89E3D}`
 2. Auth UI CredUI — `{924DC564-16A6-42EB-929A-9A61FA7DA06F}`
 
-### Why HelpPane was used even though it is not in the table
+### Workaround: public PoC is HelpPane, but HelpPane was not in the list
 
-PermissionHunter answers: *which AppIDs have Interactive User + Remote Activation ACLs?*  
-It does **not** answer: *which of those objects can actually run a command?*
+The public PoC we used (**IHxExec**) is built on HelpPane / IHxHelpPaneServer (`{8cec58ae-07a1-11d9-b15e-000d56bfe6ee}`). That CLSID did **not** appear in the PermissionHunter output above.
 
-Most rows above only prove launch/activation rights. They do not expose a public method like `Execute()`. Without that method (or a hijack path), listing them is not enough to get code execution.
+That is not a contradiction. PermissionHunter was filtered for objects that allow **RemoteLaunch / RemoteActivation** as Interactive User. IHxExec does not need that path. The workaround was:
 
-HelpPane / IHxHelpPaneServer (`{8cec58ae-07a1-11d9-b15e-000d56bfe6ee}`) was used for three technical reasons:
+1. Copy `IHxExec.exe` to the victim (`G-Research-01`, `C:\Temp`).
+2. Run it **on the victim** as **SYSTEM** with PsExec (`-s`), not as a remote `CoCreateInstanceEx` from the attacker.
+3. Pass the Active session ID (`-s 3`) so COM activates HelpPane in the victim RDP session.
+4. Call `IHxHelpPaneServer::Execute()` to start `calc.exe` in that session.
 
-1. **Known executable interface.** `IHxHelpPaneServer::Execute()` takes a file path and starts it in the target session. That is the missing piece for most objects in the table.
-2. **Different execution path than the filter.** IHxExec was copied to G-Research-01 and run **locally as SYSTEM via PsExec**. Local cross-session activation does not depend on the same RemoteLaunch ACL that PermissionHunter filtered on. So an object can be absent from the remote-activation table and still work when the PoC runs on the box.
-3. **Control test.** Using a documented interface first isolates CSA mechanics (SetSessionId + Interactive User + Active session) from CLSID research. After that control worked (Session 3, calc as victim), Speech Runtime is the correct next target because it **is** in the scan and has SpeechRuntimeMove.
+Technically this is still Cross-Session Activation: an elevated process calls `ISpecialSystemProperties::SetSessionId`, then creates an Interactive User COM server in another session. The difference is the **activation origin**. Remote DCOM would be checked against the RemoteLaunch ACL that produced the table. Local SYSTEM activation is checked against local launch rights, which SYSTEM has. HelpPane can therefore be missing from a remote-activation filter and still work when the PoC is delivered and executed on the host.
+
+HelpPane was also the only well-documented interface in this set with a direct command-execution method (`Execute()`). Objects in the table prove ACL fit; they do not automatically expose an equivalent method. After this workaround confirmed CSA (Session 3, calc as victim), the scan-backed next step is Speech Runtime + SpeechRuntimeMove.
 
 ---
 
@@ -131,7 +133,7 @@ sc \\10.110.0.101 start RemoteRegistry
 **What it does:**  
 IHxExec uses the IHxHelpPaneServer COM object (`RunAs = Interactive User`) to perform Cross-Session Activation. It calls `SetSessionId` then activates the COM class in the target session and invokes `Execute()` to run an arbitrary binary in the victim user’s context.
 
-See Step 1 for why HelpPane was used despite not appearing in the PermissionHunter table: it provides `Execute()`, and this lab path was local SYSTEM activation via PsExec, not remote DCOM filtered by that scan.
+The public PoC is HelpPane-based. HelpPane was not in the PermissionHunter list, so the workaround was to run IHxExec locally as SYSTEM on the victim (PsExec) instead of depending on remote DCOM ACLs. See Step 1 for the full technical explanation.
 
 **Transfer to victim machine:**  
 Copy IHxExec.exe to the target (e.g. `C:\Temp\IHxExec.exe`).
