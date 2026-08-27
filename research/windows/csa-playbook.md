@@ -1,5 +1,14 @@
 # Cross-Session Activation — Playbook Notes
 
+## Lab tests
+
+| Test | CLSID / App | In PermissionHunter list? | PoC | Status |
+|------|-------------|---------------------------|-----|--------|
+| **Test-1** | HelpPane / IHxHelpPaneServer `{8cec58ae-07a1-11d9-b15e-000d56bfe6ee}` | No | IHxExec | Completed — calc in victim Session 3 |
+| **Test-2** | Speech Runtime COM `{38FE8DFE-B129-452B-A215-119382B89E3D}` | Yes | SpeechRuntimeMove | Next |
+
+---
+
 ## Step 1: COM Objects Enumeration
 
 **Goal:** Find COM classes that can be used for Cross-Session Activation.
@@ -54,12 +63,12 @@ Why: Needs full read of `HKLM\SOFTWARE\Classes\AppID` / `CLSID` and Launch/Acces
 | {f59bbec1-0907-4464-b04d-1da329585370} | ActivatableApplicationRegistrar | Interactive User | LocalLaunch. RemoteLaunch. LocalActivation. RemoteActivation | BUILTIN\Administrators | AccessAllowed |  |  |  | {dea794e0-1c1d-4363-b171-98d0b1703586} |
 
 **Recommended first targets from this scan:**
-1. Speech Runtime — `{38FE8DFE-B129-452B-A215-119382B89E3D}`
+1. Speech Runtime — `{38FE8DFE-B129-452B-A215-119382B89E3D}` (**Test-2**)
 2. Auth UI CredUI — `{924DC564-16A6-42EB-929A-9A61FA7DA06F}`
 
-### Workaround: public PoC is HelpPane, but HelpPane was not in the list
+### Workaround: public PoC is HelpPane, but HelpPane was not in the list (Test-1)
 
-The public PoC we used (**IHxExec**) is built on HelpPane / IHxHelpPaneServer (`{8cec58ae-07a1-11d9-b15e-000d56bfe6ee}`). That CLSID did **not** appear in the PermissionHunter output above.
+The public PoC used for **Test-1** (**IHxExec**) is built on HelpPane / IHxHelpPaneServer (`{8cec58ae-07a1-11d9-b15e-000d56bfe6ee}`). That CLSID did **not** appear in the PermissionHunter output above.
 
 That is not a contradiction. PermissionHunter was filtered for objects that allow **RemoteLaunch / RemoteActivation** as Interactive User. IHxExec does not need that path. The workaround was:
 
@@ -70,7 +79,7 @@ That is not a contradiction. PermissionHunter was filtered for objects that allo
 
 Technically this is still Cross-Session Activation: an elevated process calls `ISpecialSystemProperties::SetSessionId`, then creates an Interactive User COM server in another session. The difference is the **activation origin**. Remote DCOM would be checked against the RemoteLaunch ACL that produced the table. Local SYSTEM activation is checked against local launch rights, which SYSTEM has. HelpPane can therefore be missing from a remote-activation filter and still work when the PoC is delivered and executed on the host.
 
-HelpPane was also the only well-documented interface in this set with a direct command-execution method (`Execute()`). Objects in the table prove ACL fit; they do not automatically expose an equivalent method. After this workaround confirmed CSA (Session 3, calc as victim), the scan-backed next step is Speech Runtime + SpeechRuntimeMove.
+HelpPane was also the only well-documented interface in this set with a direct command-execution method (`Execute()`). Objects in the table prove ACL fit; they do not automatically expose an equivalent method. After Test-1 confirmed CSA (Session 3, calc as victim), **Test-2** uses Speech Runtime, which **is** in the scan.
 
 ---
 
@@ -128,12 +137,12 @@ sc \\10.110.0.101 start RemoteRegistry
 
 ---
 
-## Step 4: IHxExec (HelpPane PoC)
+## Test-1: IHxExec (HelpPane PoC)
 
 **What it does:**  
 IHxExec uses the IHxHelpPaneServer COM object (`RunAs = Interactive User`) to perform Cross-Session Activation. It calls `SetSessionId` then activates the COM class in the target session and invokes `Execute()` to run an arbitrary binary in the victim user’s context.
 
-The public PoC is HelpPane-based. HelpPane was not in the PermissionHunter list, so the workaround was to run IHxExec locally as SYSTEM on the victim (PsExec) instead of depending on remote DCOM ACLs. See Step 1 for the full technical explanation.
+The public PoC is HelpPane-based. HelpPane was not in the PermissionHunter list, so the workaround was to run IHxExec locally as SYSTEM on the victim (PsExec) instead of depending on remote DCOM ACLs.
 
 **Transfer to victim machine:**  
 Copy IHxExec.exe to the target (e.g. `C:\Temp\IHxExec.exe`).
@@ -161,3 +170,28 @@ When the correct Active Session ID was used, output showed:
 [+] Executing binary: file:///C:\Windows\System32\calc.exe
 error code 0
 ```
+
+---
+
+## Test-2: Speech Runtime COM (SpeechRuntimeMove)
+
+**Why this test:**  
+Speech Runtime **is** in the PermissionHunter list. AppID `{1725704B-A716-4E04-8EF6-87ED4F0A180A}`, CLSID `{38FE8DFE-B129-452B-A215-119382B89E3D}` (Speech Named Pipe COM). Public PoC: [SpeechRuntimeMove](https://github.com/rtecCyberSec/SpeechRuntimeMove).
+
+**What it does:**  
+Activates Speech Runtime as Interactive User in a chosen session. `SpeechRuntime.exe` starts in the victim context. The PoC plants a COM hijack (Remote Registry + DLL drop) so that process loads attacker code and runs a command **as the logged-on user**.
+
+**Requires:** Admin on target, Remote Registry running, Active session, DLL on target.
+
+**Enum:**
+```bash
+SpeechRuntimeMove.exe mode=enum target=10.110.0.101
+```
+
+**Attack (Session 3 = victim):**
+```bash
+SpeechRuntimeMove.exe mode=attack target=10.110.0.101 dllpath=C:\Windows\Temp\payload.dll session=3 targetuser=green\victim command="cmd.exe /C calc.exe"
+```
+
+**Expected result:**  
+Same as Test-1 for the outcome: attacker triggers from G-Research-02; `calc.exe` (or payload) runs on G-Research-01 **as the victim user**. Unlike Test-1, this path matches the scanned CLSID and uses remote COM hijack rather than HelpPane `Execute()`.
