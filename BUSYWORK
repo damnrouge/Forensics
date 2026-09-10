@@ -1,0 +1,17 @@
+1. Why Rust binaries trigger EDR ML even for hello_world
+
+Rust statically links all dependencies into a single .exe by default. This produces a large binary (~3MB) with ~10,000 functions and a near-empty import table — a profile that closely matches ransomware families (BlackCat, RansomHub) in CrowdStrike's training data. The ML model flags it on disk write, before execution. Fix: binary must be code-signed with a trusted CA certificate to shift the trust signal. Unsigned = automatic high-risk score regardless of what the binary actually does.
+
+2. Why BusyWork with selective features doesn't hit the same wall
+
+Adding this to Cargo.toml:
+
+toml
+busywork = { version = "0.1", default-features = false, features = ["cat-compute", "cat-memory", "cat-winapi"] }
+
+disables network, registry, COM, and crypto categories — reducing dependency count and binary bloat. The resulting binary is smaller, has a narrower syscall footprint, and generates less static string noise from excluded crates. It still gets flagged by static ML for being Rust, but behavioral detection is the relevant signal here — which is what the test is actually measuring.
+
+3. Test strategy
+
+Baseline (sleep binary): Compiled in C++ or Python — small binary, rich import table, looks like normal software. No static ML hit. Establishes clean detection baseline for traditional Sleep()-based beacon cadence.
+Evasion candidate: Compiled in Rust + BusyWork — replaces Sleep() with real varied work. Static ML will fire (Rust language bias); add a Falcon hash exclusion to isolate behavioral signal. The test question is: does behavioral ML detect the busy-sleep loop cadence after static noise is removed?
