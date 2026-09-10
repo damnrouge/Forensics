@@ -1,5 +1,4 @@
 // baseline_sleep.cpp
-// Test-1: Suspicious beacon — checkin + discovery + Sleep()
 // Compile: g++ baseline_sleep.cpp -o baseline_sleep.exe -lws2_32 -O2 -static
 
 #include <windows.h>
@@ -27,19 +26,21 @@ void query_registry() {
     HKEY hKey;
     char buf[256];
     DWORD sz = sizeof(buf);
-
     RegOpenKeyExA(HKEY_LOCAL_MACHINE,
         "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hKey);
     RegQueryValueExA(hKey, "ProductName", NULL, NULL, (LPBYTE)buf, &sz);
     RegCloseKey(hKey);
-
     RegOpenKeyExA(HKEY_LOCAL_MACHINE,
         "SYSTEM\\CurrentControlSet\\Services", 0, KEY_READ, &hKey);
     RegCloseKey(hKey);
 }
 
+BOOL CALLBACK WndEnumProc(HWND hwnd, LPARAM lParam) {
+    return TRUE;
+}
+
 void enum_windows_check() {
-    EnumWindows([](HWND, LPARAM) -> BOOL { return TRUE; }, 0);
+    EnumWindows(WndEnumProc, 0);
     GetSystemMetrics(SM_CXSCREEN);
     GetSystemMetrics(SM_CYSCREEN);
 }
@@ -47,17 +48,14 @@ void enum_windows_check() {
 void simulate_checkin(int iter) {
     WSADATA wsa;
     WSAStartup(MAKEWORD(2,2), &wsa);
-
     SOCKET s = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in sa = {};
     sa.sin_family      = AF_INET;
     sa.sin_port        = htons(C2_PORT);
     sa.sin_addr.s_addr = inet_addr(C2_HOST);
-
     int result = connect(s, (struct sockaddr*)&sa, sizeof(sa));
     printf("  [checkin] iter=%d %s\n",
            iter, result == 0 ? "connected" : "no listener");
-
     closesocket(s);
     WSACleanup();
 }
@@ -68,14 +66,11 @@ int main() {
 
     for (int i = 0; i < ITERATIONS; i++) {
         DWORD t = GetTickCount();
-
         simulate_checkin(i);
         enum_processes();
         query_registry();
         enum_windows_check();
-
         Sleep(SLEEP_MS);
-
         printf("  iter %d: %lu ms\n", i, GetTickCount() - t);
     }
     return 0;
