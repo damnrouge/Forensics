@@ -1,0 +1,17 @@
+Kernel-Mode Foundation: Falcon's sensor (csagent.sys) is fundamentally a kernel-mode agent.
+
+Reference: The article's Section 1 discusses "Kernel-mode lets see whats Driver" and the main binary is CSAgent.sys. Lines 9-10, 188-190.
+
+Primary Telemetry Source: kernel callbacks and minifilters.
+
+Reference: Lines 188-199 show the six kernel notification sources: Process, Thread, Image, Object, Registry, File.
+
+ETW is Secondary: Falcon consumes ETW for specific providers.
+
+Reference: Line 199: "Plus ETW output:EtwRegister / EtwWriteTransfer telemetry to CSFalconService.exe."
+
+Also line 212-213: CS_TraceEnter for ETW trace.
+
+The Spoofed Provider is Diagnostic Only: The CrowdStrike-Falcon Sensor-CSFalconService ETW provider is a diagnostic channel.
+
+Reference: Line 199-200 mentions "ETW output:EtwRegister / EtwWriteTransfer telemetry to CSFalconService.exe." This confirms the provider writes to CSFalconService.exe as a diagnostic/telemetry output.
