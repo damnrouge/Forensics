@@ -1,0 +1,68 @@
+
+Six kernel notification sources are registered by design. The sensor registers Process (PsSetCreateProcessNotifyRoutineEx), Thread (PsSetCreateThreadNotifyRoutine), Image (PsSetLoadImageNotifyRoutine), Object (ObRegisterCallbacks), Registry (CmRegisterCallbackEx), and File (FltRegisterFilter) callbacks. The article calls this "the entire 'where detection happens' surface."
+
+{quote}csagent.sys registers six kernel notification sources. This is the entire 'where detection happens' surface.{quote}
+
+Detection events are constructed from kernel memory, not ETW. CS_BuildCreationEvent builds the full process-creation record directly from internal kernel tracking structures — PID, parent PID, image path, command line, signer, reputation, SID, integrity.
+
+{quote}CS_BuildCreationEvent is the sensor's full process-creation telemetry record: identity (PID/parent/name), provenance (image path, command line, TxF flag), trust (signer, reputation, SID/integrity) — everything the cloud rules need.{quote}
+
+The detection dispatch consumes kernel event objects. The CS_DetectionDispatch function reads the kernel callback event object. There is no ETW input on this code path.
+
+Evidence — ETW Is an Output Channel, Not a Detection Input:
+
+The sensor writes ETW output, it does not read its own provider. The article lists ETW as one of the sensor's output mechanisms, alongside cloud upload and local logging.
+
+{quote}Plus ETW output: EtwRegister / EtwWriteTransfer telemetry to CSFalconService.exe.{quote}
+
+The spoofed provider's endpoint is user-mode, not the cloud. ETW output terminates at CSFalconService.exe, which writes to the Windows Event Log. It does not feed the kernel-sourced cloud pipeline.
+
+{quote}EtwWriteTransfer telemetry to CSFalconService.exe.{quote}
+
+Cloud telemetry is buffered separately through CLFS. Cloud-bound events are staged in a crash-safe transactional log managed by CLFS.SYS before upload. The ETW provider is not part of this buffer chain.
+
+{quote}CLFS.SYS ⇒ its a transactional logging; buffers telemetry locally in crash-safe logs and flushes to cloud when connected.{quote}
+
+Evidence — The Detection Events Visible in Sensor Logs Are All Kernel-Sourced:
+
+The following events — visible in the sensor's event pipeline — are constructed from kernel callbacks, not ETW:
+
+|| Event || Source Callback ||
+
+| ProcessRollup2 | PsSetCreateProcessNotifyRoutineEx |
+
+| RegistryValueWritten | CmRegisterCallbackEx |
+
+| ExeFileWritten | FltRegisterFilter |
+
+| JpegFileWritten | FltRegisterFilter |
+
+| PythonFileWritten | FltRegisterFilter |
+
+| EsseFileWritten | FltRegisterFilter |
+
+| CommonHashHistory | Image load callback |
+
+| DeliverRulesAndRulesResultsToCloud | Detection engine output |
+
+None of these pass through the CrowdStrike-Falcon Sensor-CSFalconService ETW provider.
+
+Conclusion:
+
+· Primary telemetry: kernel callbacks (not touchable from user mode)
+· Enrichment: ETW from Microsoft providers (e.g., Threat-Intelligence)
+· Diagnostic: Falcon's own ETW provider (spoofable, local-only)
+· Result: Spoofed Falcon ETW events reach the Windows Event Log but never reach the detection engine or the cloud Threat Graph
+
+Reference: [Inside the Falcon — How CrowdStrike Catches You|https://0xdbgman.github.io/posts/inside-the-falcon-how-crowdstrike-catches-you/]
+
+---
+
+Why This Framing Works for JIRA
+
+· Lead claim answers "why no detection" in the first sentence
+· Numbered points are independently verifiable against the article
+· Block quotes give the reviewer exact text to cross-check
+· Table shows the concrete list of events from your screenshot and their actual source
+· Conclusion separates the three telemetry classes so no reviewer conflates them
+· Reference link at the bottom so the claim chain is auditable
