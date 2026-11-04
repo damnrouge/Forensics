@@ -1,7 +1,39 @@
-Below are some ways attackers misuse how SVG files are displayed, each one getting past detection in a different way.
+Here is the text from slide 10, "What the SOC should look for," in markdown:
 
-Inline <script> execution — JS in a <script> tag, runs via onload. Easily caught: <script is a trivial signature match.
-Event-handler execution (no <script> tag) — Code lives in onload=/onclick= instead. Evasive: rules that only grep for <script miss it entirely.
-External script loading — SVG just loads a second-stage .js at render time. Evasive: the file at rest is small and clean — nothing malicious to scan.
-SVG smuggling (base64) — Payload decoded via atob() at runtime. Evasive: no readable keywords, just an opaque data blob.
-<foreignObject> HTML embedding — Real <input>/<form> embedded, no JS at all. Evasive: trips no script/entropy rule since it's not script-based.
+```markdown
+# What the SOC should look for
+
+**Detection opportunities**
+
+## 01 File creation
+Admins create mandatory profiles on purpose, so a new NTUSER.MAN in a user's folder points to tampering.
+
+**SOC monitors:** File-creation events for NTUSER.MAN in %USERPROFILE%, excluding managed deployments.
+
+## 02 DLL load
+Few ordinary apps edit offline hives, so offreg.dll loading in one is a sign of hive manipulation.
+
+**SOC monitors:** Image-load events for offreg.dll, with the loading process and its parent.
+
+## 03 Profile anomaly
+A user's settings reset every logon when a rogue profile file is loaded in place of the real one.
+
+**SOC monitors:** Helpdesk tickets and profile-load logs showing repeated resets for one user.
+
+## 04 Hive file writes
+Only the profile service and the user's session should write these hives, so any other writer is suspicious.
+
+**SOC monitors:** File-write events on NTUSER.DAT and NTUSER.MAN from unexpected processes.
+
+## 05 Post-logon execution
+A program that starts right after a profile loads can be the persistence entry running from the hive.
+
+**SOC monitors:** Process creation in the first minutes after logon, especially from user-writable paths.
+
+## 06 Baseline and hunt
+Legitimate NTUSER.MAN files are known in advance, so an unlisted one is a clear signal.
+
+**SOC monitors:** Scheduled hunts across endpoints that compare NTUSER.MAN files to the asset baseline.
+
+**Takeaway:** Detect the file and the logon, not only registry writes.
+```
