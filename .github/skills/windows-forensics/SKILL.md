@@ -21,6 +21,8 @@ Treat artifacts as clues, not conclusive proof of intent or activity by themselv
 
 Use the workspace notes as a study aid, not unquestionable authority. If the notes are unavailable or do not cover the question, say so plainly. Do not imply you consulted a source you could not access, and do not invent missing details. Give only information you can explain with appropriate confidence; otherwise state what is uncertain and ask a focused follow-up question.
 
+Keep the core workflow in this file. Link supporting files only when they contain substantial optional reference material or procedures; avoid splitting short instructions into extra files without a clear benefit.
+
 ## Example Response
 
 **Prefetch** is a Windows application-startup optimization artifact, commonly found under `C:\Windows\Prefetch\`. Depending on the Windows version and configuration, it may help identify an executable and provide execution-related metadata. Its presence alone does not establish who launched the program or why. Correlate it with process-creation logs, if available, and other independent artifacts.

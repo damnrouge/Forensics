@@ -10,6 +10,7 @@ Short, cumulative reference for the Windows Forensics skill-building lessons. Th
 2. **Frontmatter:** Put `name` and `description` between opening and closing `---` lines. The skill `name` must match its containing folder.
 3. **Description:** Summarize the skill's action, topic, recognizable user keywords, and when to use it. It helps discovery; it does not guarantee automatic invocation.
 4. **Instructions:** Put actionable behavior in the Markdown body. Use supporting references only when they add value, and link them with correct relative paths.
+5. **Organization:** Keep core workflow instructions in `SKILL.md`. Add linked supporting files only for substantial optional detail; extra files create maintenance and navigation costs.
 
 ## Building and Improving a Skill
 
@@ -21,6 +22,13 @@ Short, cumulative reference for the Windows Forensics skill-building lessons. Th
 6. Link relevant references, verify that each path exists, and be transparent if a source is missing or incomplete.
 7. Test a relevant request, an unrelated request, and explicit slash invocation.
 8. Review the result and update the skill and this quick reference when lessons produce new takeaways.
+
+## Organizing Skill Content
+
+- Keep the required workflow and essential constraints in `SKILL.md`.
+- Put long, optional procedures or reference material in nearby files only when they meaningfully improve navigation or reduce unnecessary context.
+- Link supporting material from `SKILL.md` and verify the link.
+- Avoid creating files just to make the skill folder look organized; prefer the simplest structure that is easy to maintain.
 
 ## Invocation Settings
 
@@ -60,6 +68,7 @@ disable-model-invocation: true
 | [Lesson 2 — Improve and Test](./Lessons/Level-1-Lesson-02-Improving-and-Testing.md) | Examples, invocation settings, and behavior-based testing. |
 | [Lesson 3 — Handle References](./Lessons/Level-1-Lesson-03-Reference-Handling.md) | Correct relative paths, source limitations, and honest fallback behavior. |
 | [Lesson 4 — Write a Good Description](./Lessons/Level-1-Lesson-04-Writing-a-Good-Description.md) | Discovery descriptions should be specific, keyword-rich, and scoped. |
+| [Lesson 5 — Organize Skill Content](./Lessons/Level-1-Lesson-05-Organizing-Skill-Content.md) | Keep core guidance in `SKILL.md`; split out supporting files only when useful. |
 
 ## Current Windows Forensics Skill
 
