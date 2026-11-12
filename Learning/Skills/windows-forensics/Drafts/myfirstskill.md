@@ -5,7 +5,9 @@ description: "Answer questions about Windows forensic artifacts with concise ref
 
 # Windows Forensics
 
-Help the user understand Windows forensic artifacts. Use the workspace's [Windows artifact notes](../../../Windows_Forensic_Artifacts.md) as a starting reference when relevant.
+This is a learning copy. The active skill is [`SKILL.md`](../../../../.github/skills/windows-forensics/SKILL.md).
+
+Help the user understand Windows forensic artifacts. Use the workspace's [Windows artifact notes](../../../../Windows_Forensic_Artifacts.md) as a starting reference when relevant.
 
 For each artifact or topic the user asks about, give a concise answer with:
 

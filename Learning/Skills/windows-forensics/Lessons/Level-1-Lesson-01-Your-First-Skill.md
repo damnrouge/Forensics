@@ -6,7 +6,7 @@ Learn the basic structure of a VS Code agent skill, identify what is missing fro
 
 ## Your draft
 
-Your first attempt is in [`myfirstskill.md`](windows-forensics/myfirstskill.md). It already communicates the intended topic: Windows forensic artifacts, with quick-reference answers based on workspace notes.
+Your draft copy is in [`myfirstskill.md`](../Drafts/myfirstskill.md). It already communicates the intended topic: Windows forensic artifacts, with quick-reference answers based on workspace notes.
 
 ## Validation
 
@@ -30,7 +30,7 @@ Your first attempt is in [`myfirstskill.md`](windows-forensics/myfirstskill.md).
 
 ## Your first working version
 
-The initial skill is at [`SKILL.md`](../../../.github/skills/windows-forensics/SKILL.md). Compare it with your draft:
+The active skill is at [`SKILL.md`](../../../../.github/skills/windows-forensics/SKILL.md). Compare it with your draft:
 
 - The frontmatter is clearly separated from the instructions.
 - The folder and `name` match.
@@ -54,7 +54,7 @@ Improve the first version by adding a short example response and checking how it
 
 ## Final file — current skill
 
-This is the complete starter skill created in this lesson. The standalone working copy is [`SKILL.md`](../../../.github/skills/windows-forensics/SKILL.md).
+This is the complete starter skill created in this lesson. The standalone working copy is [`SKILL.md`](../../../../.github/skills/windows-forensics/SKILL.md).
 
 ```markdown
 ---
