@@ -53,7 +53,7 @@ The skill currently links to the repository's Windows artifact notes. In the nex
 
 ## Final file — current skill
 
-Standalone working copy: [SKILL.md](../../../.github/skills/windows-forensics/SKILL.md).
+Standalone working copy: [SKILL.md](../../../../.github/skills/windows-forensics/SKILL.md).
 
 ```markdown
 ---

@@ -76,7 +76,7 @@ Next, review whether the skill's description helps Copilot discover it for the r
 
 ## Final file — current skill
 
-Standalone working copy: [SKILL.md](../../../.github/skills/windows-forensics/SKILL.md).
+Standalone working copy: [SKILL.md](../../../../.github/skills/windows-forensics/SKILL.md).
 
 ```markdown
 ---
