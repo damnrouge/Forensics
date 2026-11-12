@@ -6,7 +6,7 @@ Learn the basic structure of a VS Code agent skill, identify what is missing fro
 
 ## Your draft
 
-Your first attempt is in [`myfirstskill.md`](../myfirstskill.md). It already communicates the intended topic: Windows forensic artifacts, with quick-reference answers based on workspace notes.
+Your first attempt is in [`myfirstskill.md`](windows-forensics/myfirstskill.md). It already communicates the intended topic: Windows forensic artifacts, with quick-reference answers based on workspace notes.
 
 ## Validation
 
