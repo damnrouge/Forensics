@@ -1,6 +1,6 @@
 ---
 name: windows-forensics
-description: "Answer questions about Windows forensic artifacts with concise references to their purpose, location, investigative value, limitations, and corroboration. Use when researching or learning about Windows artifacts or Windows activity."
+description: "Explain, compare, and help interpret Windows forensic artifacts and activity evidence, including Prefetch, Registry artifacts, event logs, Amcache, Jump Lists, and file-system traces. Use when researching Windows forensics, artifact meaning, evidence limitations, or corroborating sources."
 ---
 
 # Windows Forensics
